@@ -1,29 +1,27 @@
-package ch.sama.sql.tsql.dialect;
+package ch.sama.sql.mysql.dialect;
 
-import ch.sama.sql.query.generic.ValueFactory;
+import ch.sama.sql.query.exception.NotImplementedException;
 import ch.sama.sql.query.exception.UnknownValueException;
+import ch.sama.sql.query.generic.ValueFactory;
 import ch.sama.sql.query.helper.Value;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
-class TSqlValueFactory extends ValueFactory {
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-
-    public TSqlValueFactory() {
-        super(new TSqlQueryRenderer());
+public class MySqlValueFactory extends ValueFactory {
+    public MySqlValueFactory() {
+        super(new MySqlQueryRenderer());
     }
 
     @Override
     public Value date(Date date) {
-        return new Value(date, "CONVERT(datetime, '" + DATE_FORMAT.format(date) + "', 21)");
+        throw new NotImplementedException("I have no idea how Dates work in MySql :)");
     }
 
     @Override
     public Value string(String s) {
-        return new Value(s, "'" + s.replace("'", "''") + "'");
+        return new Value(s, "'" + s.replace("'", "\\'") + "'");
     }
-    
+
     @Override
     public Value bool(Boolean b) {
         if (b) {

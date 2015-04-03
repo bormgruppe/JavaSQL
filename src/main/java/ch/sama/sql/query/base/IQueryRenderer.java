@@ -30,4 +30,6 @@ public interface IQueryRenderer {
     public String render(Value v);
     public String render(Source s);
     public String render(Function f);
+
+    public String renderObjectName(String s);
 }

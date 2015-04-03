@@ -27,7 +27,7 @@ public interface IValueFactory {
     public Value function(String fnc, Value... parameters);
     public Value function(Function fnc);
     public Value query(IQuery query);
-    public Value value(Value.VALUE val);
+    public Value value(Value.VALUE value);
     
     public Value combine(String operator, Value... values);
     public Value bracket(Value value);

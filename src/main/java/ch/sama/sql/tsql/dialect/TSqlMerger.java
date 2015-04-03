@@ -17,6 +17,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/*
+    There is no parent object for this
+    I don't know if any other dialect does this
+ */
 public class TSqlMerger {
     public static class Pair {
         private Field f;
