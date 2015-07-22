@@ -5,10 +5,13 @@ import ch.sama.sql.csv.CSVSet;
 import ch.sama.sql.dbo.Field;
 import ch.sama.sql.dbo.IType;
 import ch.sama.sql.dbo.Table;
+import ch.sama.sql.dialect.tsql.type.TYPE;
 import ch.sama.sql.query.base.IQueryRenderer;
 import ch.sama.sql.query.exception.BadParameterException;
+import ch.sama.sql.query.exception.BadSqlException;
 import ch.sama.sql.query.helper.Value;
-import ch.sama.sql.dialect.tsql.type.TYPE;
+import ch.sama.sql.query.helper.pattern.Dates;
+import ch.sama.sql.query.helper.pattern.Numerics;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -349,33 +352,13 @@ public class TSqlMerger {
                 }
             }
             
-            builder.append(")\n");
-            builder.append("OUTPUT ");
-
-            prefix = "";
-            for (Pair pair : fields) {
-                String name = pair.getField().getName();
-                
-                builder.append(prefix);
-                builder.append("INSERTED.[");
-                builder.append(name);
-                builder.append("]");
-
-                prefix = ", ";
-            }
-            
-            builder.append(";");
+            builder.append(");");
             
             return builder.toString();
         }
     }
 
-    public static final String NORM_DATE = "^\\d{1,2}\\.\\d{1,2}\\.\\d{4}$";
-    public static final String NORM_DATE_TIME = "^\\d{1,2}\\.\\d{1,2}\\.\\d{4}\\s\\d{2}:\\d{2}(:\\d{2})?$";
-    public static final String ISO_DATE = "^\\d{4}-\\d{2}-\\d{2}$";
-    public static final String ISO_DATE_TIME = "^\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2}(:\\d{2})?$";
-    public static final String INT = "^\\d+$";
-    public static final String FLOAT = "^(\\d+\\.\\d*|\\d*\\.\\d+)$";
+    private static final TSqlValueFactory valueFactory = new TSqlValueFactory();
     
     public TSqlMerger() { }
     
@@ -398,16 +381,72 @@ public class TSqlMerger {
         return new Pair(f, v);
     }
 
-    private String[] getDateParts(String s) {
-        String[] parts = s.split("\\.");
+    public Pair value(Field f, Object o) {
+        if (o == null) {
+            return new Pair(f, TSqlValueFactory.NULL);
+        }
 
-        for (int i = 0; i < parts.length; ++i) {
-            if (parts[i].length() < 2) {
-                parts[i] = "0" + parts[i];
+        IType type = f.getDataType();
+        String s = o.toString();
+
+        if (TYPE.isEqualType(type, TYPE.CHAR_TYPE) || TYPE.isEqualType(type, TYPE.VARCHAR_TYPE) || TYPE.isEqualType(type, TYPE.NVARCHAR_TYPE) || TYPE.isEqualType(type, TYPE.TEXT_TYPE)) {
+            return new Pair(f, valueFactory.string(s));
+        }
+
+        if (TYPE.isEqualType(type, TYPE.INT_TYPE)) {
+            if (Numerics.isInteger(s)) {
+                return new Pair(f, valueFactory.numeric(Integer.parseInt(s)));
+            } else if (Numerics.isFloat(s)) {
+                return new Pair(f, valueFactory.numeric((int) Double.parseDouble(s)));
+            } else {
+                throw new BadSqlException("Expected Int, got: " + s + " (" + o.getClass().getSimpleName() + ")");
             }
         }
 
-        return parts;
+        if (TYPE.isEqualType(type, TYPE.FLOAT_TYPE)) {
+            if (Numerics.isInteger(s)) {
+                return new Pair(f, valueFactory.numeric(Integer.parseInt(s)));
+            } else if (Numerics.isFloat(s)) {
+                return new Pair(f, valueFactory.numeric(Double.parseDouble(s)));
+            } else {
+                throw new BadSqlException("Expected Double, got: " + s + " (" + o.getClass().getSimpleName() + ")");
+            }
+        }
+
+        if (TYPE.isEqualType(type, TYPE.BIT_TYPE)) {
+            if (s.equals("0") || s.equals("0.0")) {
+                return new Pair(f, valueFactory.bool(false));
+            } else if (s.equals("1") || s.equals("1.0")) {
+                return new Pair(f, valueFactory.bool(true));
+            } else if (s.matches("(?i)true|false")) {
+                return new Pair(f, valueFactory.bool(Boolean.parseBoolean(s)));
+            } else {
+                throw new BadSqlException("Expected Boolean, got: " + s + " (" + o.getClass().getSimpleName() + ")");
+            }
+        }
+
+        if (TYPE.isEqualType(type, TYPE.DATETIME_TYPE)) {
+            if (Dates.isKnownDate(s)) {
+                return datePair(f, s);
+            } else {
+                throw new BadSqlException("Expected Date, got: " + s + " (" + o.getClass().getSimpleName() + ")");
+            }
+        }
+
+        Pair pair = value(f.getName(), o);
+        return new Pair(f, pair.getValue());
+    }
+
+    private Pair datePair(Field f, String s) {
+        return new Pair(
+                f,
+                valueFactory.function(
+                        "CONVERT",
+                        valueFactory.type(TYPE.DATETIME_TYPE),
+                        valueFactory.string(Dates.toIsoDateTime(s)),
+                        valueFactory.numeric(21)
+                )
+        );
     }
 
     /**
@@ -417,29 +456,28 @@ public class TSqlMerger {
      * @return field-value pair
      */
     public Pair value(String field, Object o) {
-        TSqlValueFactory value = new TSqlQueryFactory().value();
         Field f = new Field(field);
         
         if (o == null) {
             f.setDataType(TYPE.NO_TYPE);
-            return new Pair(f, value.value(Value.VALUE.NULL));
+            return new Pair(f, TSqlValueFactory.NULL);
         }
 
         if (o instanceof Boolean) {
             f.setDataType(TYPE.BIT_TYPE);
             
-            return new Pair(f, value.bool((boolean) o));
+            return new Pair(f, valueFactory.bool((boolean) o));
         }
         
         if (o instanceof Integer || o instanceof Short || o instanceof Long) {
             f.setDataType(TYPE.INT_TYPE);
 
             if (o instanceof Integer) {
-                return new Pair(f, value.numeric((int) o));
+                return new Pair(f, valueFactory.numeric((int) o));
             } else if (o instanceof Short) {
-                return new Pair(f, value.numeric((int) ((short) o)));
+                return new Pair(f, valueFactory.numeric((int) ((short) o)));
             } else {
-                return new Pair(f, value.numeric((int) ((long) o)));
+                return new Pair(f, valueFactory.numeric((int) ((long) o)));
             }
         }
         
@@ -447,15 +485,15 @@ public class TSqlMerger {
             f.setDataType(TYPE.FLOAT_TYPE);
             
             if (o instanceof Double) {
-                return new Pair(f, value.numeric((double) o));
+                return new Pair(f, valueFactory.numeric((double) o));
             } else {
-                return new Pair(f, value.numeric((float) o));
+                return new Pair(f, valueFactory.numeric((float) o));
             }
         }
         
         if (o instanceof Date) {
             f.setDataType(TYPE.DATETIME_TYPE);
-            return new Pair(f, value.date((Date) o));
+            return new Pair(f, valueFactory.date((Date) o));
         }
         
         if (o instanceof String) {
@@ -463,82 +501,26 @@ public class TSqlMerger {
             
             if (s.length() == 0 || s.toLowerCase().equals("null")) {
                 f.setDataType(TYPE.NO_TYPE);
-                return new Pair(f, value.value(Value.VALUE.NULL));
+                return new Pair(f, TSqlValueFactory.NULL);
             }
             
-            if (s.matches(INT)) {
+            if (Numerics.isInteger(s)) {
                 f.setDataType(TYPE.INT_TYPE);
-                return new Pair(f, value.numeric(Integer.parseInt(s)));
+                return new Pair(f, valueFactory.numeric(Integer.parseInt(s)));
             }
             
-            if (s.matches(FLOAT)) {
+            if (Numerics.isFloat(s)) {
                 f.setDataType(TYPE.FLOAT_TYPE);
-                return new Pair(f, value.numeric(Double.parseDouble(s)));
+                return new Pair(f, valueFactory.numeric(Double.parseDouble(s)));
             }
             
-            if (s.matches(NORM_DATE)) {
+            if (Dates.isKnownDate(s)) {
                 f.setDataType(TYPE.DATETIME_TYPE);
-                
-                String[] parts = getDateParts(s);
-                
-                return new Pair(
-                        f,
-                        value.function(
-                                "CONVERT",
-                                value.type(TYPE.DATETIME_TYPE),
-                                value.string(parts[2] + "-" + parts[1] + "-" + parts[0] + " 00:00:00"),
-                                value.numeric(21)
-                        )
-                );
-            }
-
-            if (s.matches(NORM_DATE_TIME)) {
-                f.setDataType(TYPE.DATETIME_TYPE);
-
-                String[] dt = s.split(" ");
-                String[] parts = getDateParts(dt[0]);
-
-                return new Pair(
-                        f,
-                        value.function(
-                                "CONVERT",
-                                value.type(TYPE.DATETIME_TYPE),
-                                value.string(parts[2] + "-" + parts[1] + "-" + parts[0] + " " + dt[1]),
-                                value.numeric(21)
-                        )
-                );
-            }
-            
-            if (s.matches(ISO_DATE)) {
-                f.setDataType(TYPE.DATETIME_TYPE);
-                
-                return new Pair(
-                        f,
-                        value.function(
-                                "CONVERT",
-                                value.type(TYPE.DATETIME_TYPE),
-                                value.string(s + " 00:00:00"),
-                                value.numeric(21)
-                        )
-                );
-            }
-
-            if (s.matches(ISO_DATE_TIME)) {
-                f.setDataType(TYPE.DATETIME_TYPE);
-
-                return new Pair(
-                        f,
-                        value.function(
-                                "CONVERT",
-                                value.type(TYPE.DATETIME_TYPE),
-                                value.string(s),
-                                value.numeric(21)
-                        )
-                );
+                return datePair(f, s);
             }
             
             f.setDataType(TYPE.VARCHAR_MAX_TYPE);
-            return new Pair(f, value.string(s));
+            return new Pair(f, valueFactory.string(s));
         }
         
         throw new BadParameterException("Cannot guess {" + o.getClass().getName() + ": " + o.toString() + "}");

@@ -3,13 +3,14 @@ package ch.sama.sql.dbo.result;
 import ch.sama.sql.query.exception.BadSqlException;
 
 import java.io.BufferedReader;
+import java.math.BigInteger;
 import java.sql.Clob;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
-class TransformerHelper {
-    static String[] getColumnNames(ResultSet set) throws SQLException {
+public class TransformerHelper {
+    public static String[] getColumnNames(ResultSet set) throws SQLException {
         ResultSetMetaData meta = set.getMetaData();
 
         int colCount = meta.getColumnCount();
@@ -22,7 +23,7 @@ class TransformerHelper {
         return colNames;
     }
 
-    static Object defaultTransform(Object o) {
+    public static Object defaultTransform(Object o) {
         if (o instanceof Clob) {
             Clob clob = (Clob) o;
 
@@ -45,6 +46,10 @@ class TransformerHelper {
             }
 
             return builder.toString();
+        } else if (o instanceof BigInteger) {
+            BigInteger bi = (BigInteger) o;
+
+            return bi.longValue();
         } else {
             return o;
         }

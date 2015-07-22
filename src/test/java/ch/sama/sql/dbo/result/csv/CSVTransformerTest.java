@@ -1,4 +1,4 @@
-package ch.sama.sql.dbo.result;
+package ch.sama.sql.dbo.result.csv;
 
 import ch.sama.sql.csv.CSVSet;
 import ch.sama.sql.csv.CSVWriter;

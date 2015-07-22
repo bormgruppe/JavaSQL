@@ -1,4 +1,4 @@
-package ch.sama.sql.dbo.result;
+package ch.sama.sql.dbo.result.map;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -52,6 +52,14 @@ public class MapResult {
 
     public Integer getAsInt(String key) {
         return getAs(key, Integer.class);
+    }
+
+    public Long getAsLong(String key) {
+        return getAs(key, Long.class);
+    }
+
+    public Short getAsShort(String key) {
+        return getAs(key, Short.class);
     }
 
     public Double getAsDouble(String key) {

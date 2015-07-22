@@ -5,13 +5,12 @@ import ch.sama.sql.dbo.ISchema;
 import ch.sama.sql.dbo.Table;
 import ch.sama.sql.dbo.connection.IQueryExecutor;
 import ch.sama.sql.dbo.generator.ITableFilter;
-import ch.sama.sql.dbo.result.MapResult;
-import ch.sama.sql.dbo.result.MapResultList;
+import ch.sama.sql.dbo.result.map.MapResult;
+import ch.sama.sql.dialect.tsql.type.TYPE;
 import ch.sama.sql.query.exception.BadSqlException;
 import ch.sama.sql.query.exception.ObjectNotFoundException;
 import ch.sama.sql.query.helper.Condition;
 import ch.sama.sql.query.helper.Value;
-import ch.sama.sql.dialect.tsql.type.TYPE;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -25,24 +24,23 @@ public class TSqlSchema implements ISchema {
     private static final TSqlQueryFactory sql = new TSqlQueryFactory();
     private static final TSqlValueFactory value = sql.value();
     private static final TSqlSourceFactory source = sql.source();
-    private static final TSqlQueryRenderer renderer = sql.renderer();
 
     private Map<String, Table> tables;
 
-    public TSqlSchema(IQueryExecutor<MapResultList> executor) {
+    public TSqlSchema(IQueryExecutor<List<MapResult>> executor) {
         loadSchema(executor, table -> true);
     }
 
-    public TSqlSchema(IQueryExecutor<MapResultList> executor, ITableFilter filter) {
+    public TSqlSchema(IQueryExecutor<List<MapResult>> executor, ITableFilter filter) {
         loadSchema(executor, filter);
     }
 
-    private void loadSchema(IQueryExecutor<MapResultList> executor, ITableFilter filter) {
+    private void loadSchema(IQueryExecutor<List<MapResult>> executor, ITableFilter filter) {
         TSqlFunctionFactory fnc = new TSqlFunctionFactory();
 
         tables = new HashMap<String, Table>();
 
-        MapResultList result = executor.query(
+        List<MapResult> result = executor.query(
                 sql.query()
                         .select(
                                 value.field("TABLE_SCHEMA"),
@@ -65,7 +63,7 @@ public class TSqlSchema implements ISchema {
             Table t = new Table(schema, table);
             tables.put(table, t);
 
-            MapResultList columns = executor.query(
+            List<MapResult> columns = executor.query(
                     sql.query()
                             .select(
                                     value.field("COLUMN_NAME"),
@@ -202,103 +200,6 @@ public class TSqlSchema implements ISchema {
         }
 
         return tables.get(name);
-    }
-
-    public static String getTableSchema(Table table) {
-        // TODO: Ignores FK constraints
-
-        StringBuilder builder = new StringBuilder();
-        String prefix = "";
-
-        builder.append("CREATE TABLE ");
-        builder.append(renderer.render(table));
-        builder.append("(\n");
-
-        for (Field field : table.getColumns()) {
-            builder.append(prefix);
-            builder.append("\t");
-            builder.append(getColumnSchema(field));
-
-            prefix = ",\n";
-        }
-
-        if (table.hasPrimaryKey()) {
-            builder.append(",\n\tCONSTRAINT [PK_");
-            builder.append(table.getName());
-            builder.append("] PRIMARY KEY CLUSTERED (\n");
-
-            prefix = "";
-            for (Field pKey : table.getPrimaryKey()) {
-                builder.append(prefix);
-                builder.append("\t\t[");
-                builder.append(pKey.getName());
-                builder.append("] ASC");
-
-                prefix = ",\n";
-            }
-
-            builder.append("\n\t)\n) ON [PRIMARY]");
-            // Ignores all the options: WITH  (...) ON [PRIMARY]
-        } else {
-            builder.append("\n)");
-        }
-
-        return builder.toString();
-    }
-
-    public static String getColumnSchema(Field field) {
-        StringBuilder builder = new StringBuilder();
-
-        builder.append("[");
-        builder.append(field.getName());
-        builder.append("] [");
-
-        String dataType = field.getDataType().getString();
-        if (dataType.contains("(")) {
-            int idx = dataType.indexOf("(");
-
-            builder.append(dataType.substring(0, idx));
-            builder.append("]");
-            builder.append(dataType.substring(idx));
-        } else {
-            builder.append(dataType);
-            builder.append("]");
-        }
-
-        if (field.isAutoIncrement()) {
-            builder.append(" IDENTITY(1,1)");
-        }
-
-        if (field.isNullable()) {
-            builder.append(" NULL");
-        } else {
-            builder.append(" NOT NULL");
-        }
-
-        Value defaultValue = field.getDefaultValue();
-        if (defaultValue != null) {
-            String defaultString = defaultValue.getValue();
-
-            if (!defaultString.startsWith("(") && defaultString.endsWith(")")) {
-                defaultString = "(" + defaultString + ")";
-            }
-
-            builder.append(" CONSTRAINT [DF_");
-            builder.append(field.getTableName());
-            builder.append("_");
-            builder.append(field.getName());
-            builder.append("] DEFAULT ");
-
-            if (!defaultString.startsWith("(") && defaultString.endsWith(")")) {
-                builder.append("(");
-                builder.append(defaultString);
-                builder.append(")");
-            } else {
-                builder.append(defaultString);
-            }
-        }
-
-        return builder.toString();
     }
 
     private void parse(String schema) {
@@ -443,62 +344,5 @@ public class TSqlSchema implements ISchema {
                 }
             }
         }
-    }
-
-    public static String diff(TSqlSchema lhs, TSqlSchema rhs) {
-        // lhs: actual
-        // rhs: expected
-
-        // This only executes non-destructive updates
-        //  - No drop table
-        //  - No drop column
-        //  - No change of PRIMARY KEY (that would require DROP and re-CREATE)
-
-        StringBuilder builder = new StringBuilder();
-        String prefix = "";
-
-        List<Table> rhTables = rhs.getTables();
-
-        for (Table tr : rhTables) {
-            String rhTableName = tr.getName();
-
-            if (lhs.hasTable(rhTableName)) {
-                Table tl = lhs.getTable(rhTableName);
-                List<Field> rhColumns = tr.getColumns();
-
-                for (Field fr : rhColumns) {
-                    String rhColumnName = fr.getName();
-
-                    if (tl.hasColumn(rhColumnName)) {
-                        Field fl = tl.getColumn(rhColumnName);
-
-                        if (!fr.compareTo(fl)) {
-                            builder.append(prefix);
-                            builder.append("ALTER TABLE ");
-                            builder.append(renderer.render(tr));
-                            builder.append(" ALTER COLUMN ");
-                            builder.append(getColumnSchema(fr));
-
-                            prefix = "\n";
-                        }
-                    } else {
-                        builder.append(prefix);
-                        builder.append("ALTER TABLE ");
-                        builder.append(renderer.render(tr));
-                        builder.append(" ADD ");
-                        builder.append(getColumnSchema(fr));
-
-                        prefix = "\n";
-                    }
-                }
-            } else {
-                builder.append(prefix);
-                builder.append(getTableSchema(tr));
-
-                prefix = "\n";
-            }
-        }
-
-        return builder.toString();
     }
 }

@@ -2,7 +2,6 @@ package ch.sama.sql.dialect.tsql.query;
 
 import ch.sama.sql.dbo.Field;
 import ch.sama.sql.dbo.Table;
-import ch.sama.sql.query.helper.Value;
 import ch.sama.sql.dialect.tsql.TSqlQueryFactory;
 import ch.sama.sql.dialect.tsql.TSqlSourceFactory;
 import ch.sama.sql.dialect.tsql.TSqlValueFactory;
@@ -76,7 +75,7 @@ public class InsertQueryTest {
     }
     
     @Test
-    public void insertValues() {
+    public void insertSelect() {
         assertEquals(
                 "INSERT INTO [TABLE] ([FIELD1], [FIELD2])\nSELECT 1, 2",
                 sql.query()
@@ -100,8 +99,33 @@ public class InsertQueryTest {
                         .insert()
                         .into(new Table("TABLE2"))
                         .columns("F1", "F2")
-                        .select(value.value(Value.VALUE.ALL))
+                        .select(TSqlValueFactory.ALL)
                         .from(source.table("CTE"))
+                .getSql()
+        );
+    }
+
+    @Test
+    public void insertOutput() {
+        assertEquals(
+                "INSERT INTO [TABLE] ([FIELD1], [FIELD2])\nOUTPUT [INSERTED].*\nSELECT 'A', 'B'",
+                sql.query()
+                        .insert().into("TABLE")
+                        .columns("FIELD1", "FIELD2")
+                        .output(value.table("INSERTED"))
+                        .select(value.string("A"), value.string("B"))
+                .getSql()
+        );
+    }
+
+    @Test
+    public void insertValues() {
+        assertEquals(
+                "INSERT INTO [TABLE] ([FIELD1], [FIELD2])\nVALUES ('A', 'B')",
+                sql.query()
+                        .insert().into("TABLE")
+                        .columns("FIELD1", "FIELD2")
+                        .values(value.string("A"), value.string("B"))
                 .getSql()
         );
     }
