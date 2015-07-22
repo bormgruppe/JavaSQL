@@ -51,6 +51,8 @@ public class ClassGenerator<T extends IQueryFactory> {
                 sources.write("\tpublic static final " + sourceClassName + " " + tableVarName + " = new " + sourceClassName + "();\n");
                 generateSourceClass(table, srcFolder, pkg);
 
+                generateObjectClass(table, srcFolder, pkg);
+
                 System.out.println("Generated: " + tableName);
             }
         }
@@ -168,6 +170,36 @@ public class ClassGenerator<T extends IQueryFactory> {
         writer.close();
     }
 
+    private void generateObjectClass(Table table, String srcFolder, String pkg) throws IOException {
+        String objClassName = getObjectClassName(table);
+
+        String sPkg = pkg + ".obj";
+        BufferedWriter writer = createClassFile(srcFolder, sPkg, objClassName);
+
+        writer.write("package " + sPkg + ";\n\n");
+        writer.write("import ch.sama.sql.jpa.*;\n\n");
+
+        writer.write("@Entity\n");
+        writer.write("public class " + objClassName + " {\n");
+
+        String prefix = "";
+        for (Field field : table.getColumns()) {
+            String fieldName = field.getName();
+            String type = field.getDataType().getString();
+
+            // TODO: type to class?
+
+            writer.write(prefix);
+            writer.write("\t@Column(name = \"" + fieldName + "\")\n");
+            writer.write("\tpublic Object " + fieldName + ";");
+
+            prefix = "\n\n";
+        }
+
+        writer.write("}");
+        writer.close();
+    }
+
     private BufferedWriter createClassFile(String srcFolder, String pkg, String className) throws IOException {
         String separator = System.getProperty("file.separator");
         String path = pkg.replace(".", separator);
@@ -191,6 +223,10 @@ public class ClassGenerator<T extends IQueryFactory> {
 
     private String getSourceClassName(Table table) {
         return "Src_" + table.getName();
+    }
+
+    private String getObjectClassName(Table table) {
+        return table.getName();
     }
 
     private String getTableVariableName(Table table) {
