@@ -1,38 +1,21 @@
 package ch.sama.sql.dialect.tsql.type;
 
-import ch.sama.sql.dbo.IType;
-
-public class CharType implements IType {
-    private boolean hasMaxLength;
-    private int maxLength;
-
+public class CharType extends TypeWithLength {
     CharType() {
-        this.hasMaxLength = false;
+        super();
     }
 
     CharType(int max) {
-        this.maxLength = max;
-        this.hasMaxLength = true;
+        super(max);
     }
     
     @Override
     public String getString() {
-        if (hasMaxLength) {
-            if (maxLength < 0) {
-                return "char(MAX)";
-            } else {
-                return "char(" + maxLength  + ")";
-            }
-        } else {
-            return "char";
-        }
+        return "char" + getMaxLengthAddon();
     }
-    
-    public boolean hasMaxLength() {
-        return hasMaxLength;
-    }
-    
-    public int getMaxLength() {
-        return maxLength;
+
+    @Override
+    public Class getJavaClass() {
+        return String.class;
     }
 }

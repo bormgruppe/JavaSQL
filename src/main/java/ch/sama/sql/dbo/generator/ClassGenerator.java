@@ -177,26 +177,59 @@ public class ClassGenerator<T extends IQueryFactory> {
         BufferedWriter writer = createClassFile(srcFolder, sPkg, objClassName);
 
         writer.write("package " + sPkg + ";\n\n");
+        writer.write("import java.util.List;\n");
+        writer.write("import ch.sama.sql.dbo.result.IResultSetTransformer;\n");
+        writer.write("import ch.sama.sql.dbo.result.obj.ObjectTransformer;\n");
         writer.write("import ch.sama.sql.jpa.*;\n\n");
 
         writer.write("@Entity\n");
         writer.write("public class " + objClassName + " {\n");
 
+        // This is not good, you can't have fields named TRANSFORMER like this..
+        writer.write("\tpublic static final IResultSetTransformer<List<" + objClassName + ">> TRANSFORMER = new ObjectTransformer<>(" + objClassName + ".class);\n\n");
+
         String prefix = "";
         for (Field field : table.getColumns()) {
             String fieldName = field.getName();
-            String type = field.getDataType().getString();
+            IType type = field.getDataType();
 
-            // TODO: type to class?
+            if (type instanceof JavaType) {
+                JavaType jType = (JavaType) type;
 
-            writer.write(prefix);
-            writer.write("\t@Column(name = \"" + fieldName + "\")\n");
-            writer.write("\tpublic Object " + fieldName + ";");
+                writer.write(prefix);
 
-            prefix = "\n\n";
+                if (field.isPrimaryKey()) {
+                    writer.write("\t@PrimaryKey\n");
+                }
+
+                if (field.isAutoIncrement()) {
+                    writer.write("\t@AutoIncrement\n");
+                }
+
+                if (field.isNullable()) {
+                    writer.write("\t@Column(name = \"" + fieldName + "\")\n");
+                } else {
+                    writer.write("\t@Column(name = \"" + fieldName + "\", nullable = false)\n");
+                }
+
+                if (field.hasDefaultValue()) {
+                    writer.write("\t@Default(value = \"" + field.getDefaultValue() + "\")\n");
+                }
+
+                String typeName = jType.getJavaClass().getName();
+                if (typeName.startsWith("java.lang")) {
+                    writer.write("\tpublic " + typeName.substring(10) + " " + fieldName + ";");
+                } else {
+                    writer.write("\tpublic " + typeName + " " + fieldName + ";");
+                }
+
+                prefix = "\n\n";
+            } else {
+                // throw exception?
+            }
         }
 
-        writer.write("}");
+        writer.write("\n}");
         writer.close();
     }
 

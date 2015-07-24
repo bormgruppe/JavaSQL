@@ -1,38 +1,21 @@
 package ch.sama.sql.dialect.tsql.type;
 
-import ch.sama.sql.dbo.IType;
-
-public class VarcharType implements IType {
-    private boolean hasMaxLength;
-    private int maxLength;
-    
+public class VarcharType extends TypeWithLength {
     VarcharType() {
-        this.hasMaxLength = false;
+        super();
     }
     
     VarcharType(int max) {
-        this.maxLength = max;
-        this.hasMaxLength = true;
+        super(max);
     }
     
     @Override
     public String getString() {
-        if (hasMaxLength) {
-            if (maxLength < 0) {
-                return "varchar(MAX)";
-            } else {
-                return "varchar(" + maxLength  + ")";
-            }
-        } else {
-            return "varchar";
-        }
+        return "varchar" + getMaxLengthAddon();
     }
-    
-    public boolean hasMaxLength() {
-        return hasMaxLength;
-    }
-    
-    public int getMaxLength() {
-        return maxLength;
+
+    @Override
+    public Class getJavaClass() {
+        return String.class;
     }
 }

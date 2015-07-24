@@ -1,38 +1,21 @@
 package ch.sama.sql.dialect.tsql.type;
 
-import ch.sama.sql.dbo.IType;
-
-public class NVarcharType implements IType {
-    private boolean hasMaxLength;
-    private int maxLength;
-
+public class NVarcharType extends TypeWithLength {
     NVarcharType() {
-        this.hasMaxLength = false;
+        super();
     }
 
     NVarcharType(int max) {
-        this.maxLength = max;
-        this.hasMaxLength = true;
+        super(max);
     }
     
     @Override
     public String getString() {
-        if (hasMaxLength) {
-            if (maxLength < 0) {
-                return "nvarchar(MAX)";
-            } else {
-                return "nvarchar(" + maxLength  + ")";
-            }
-        } else {
-            return "nvarchar";
-        }
+        return "nvarchar" + getMaxLengthAddon();
     }
-    
-    public boolean hasMaxLength() {
-        return hasMaxLength;
-    }
-    
-    public int getMaxLength() {
-        return maxLength;
+
+    @Override
+    public Class getJavaClass() {
+        return String.class;
     }
 }
