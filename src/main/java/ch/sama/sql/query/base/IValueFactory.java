@@ -8,6 +8,7 @@ import ch.sama.sql.query.helper.Value;
 
 public interface IValueFactory {
     public Value plain(String s);
+    public Value object(Object o);
 
     public Value field(Field field);
     public Value field(String field);

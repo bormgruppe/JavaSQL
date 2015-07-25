@@ -455,7 +455,7 @@ public class TSqlMerger {
      * @param o to be guessed
      * @return field-value pair
      */
-    public Pair value(String field, Object o) {
+    public Pair value(String field, Object o) { // TODO: This (now) duplicates ValueFactory.object()
         Field f = new Field(field);
         
         if (o == null) {
