@@ -1,10 +1,15 @@
 package ch.sama.sql.jpa;
 
+import ch.sama.sql.dbo.IType;
+import ch.sama.sql.dbo.Table;
+import ch.sama.sql.query.helper.Value;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public class JpaUtil<T> {
     private Class<T> clazz;
@@ -69,5 +74,61 @@ public class JpaUtil<T> {
         }
 
         return map;
+    }
+
+    public Table toTable(Class<T> clazz, Function<Class<?>, IType> classToType) {
+        if (!clazz.isAnnotationPresent(Entity.class)) {
+            throw new JpaException("Class must be annotated with @Entity");
+        }
+
+        Table table;
+
+        Entity entity = clazz.getAnnotation(Entity.class);
+
+        String tableName = entity.name();
+        if ("".equals(tableName)) {
+            tableName = clazz.getSimpleName();
+        }
+
+        String schema = entity.schema();
+
+        if ("".equals(schema)) {
+            table = new Table(tableName);
+        } else {
+            table = new Table(schema, tableName);
+        }
+
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field f : fields) {
+            if (f.isAnnotationPresent(Column.class)) {
+                Column aCol = f.getAnnotation(Column.class);
+
+                ch.sama.sql.dbo.Field column = new ch.sama.sql.dbo.Field(table, aCol.name());
+
+                if (aCol.nullable()) {
+                    column.setNullable();
+                } else {
+                    column.setNotNullable();
+                }
+
+                if (f.isAnnotationPresent(PrimaryKey.class)) {
+                    column.setAsPrimaryKey();
+                }
+
+                if (f.isAnnotationPresent(AutoIncrement.class)) {
+                    column.setAutoIncrement();
+                }
+
+                if (f.isAnnotationPresent(Default.class)) {
+                    column.setDefaultValue(new Value(f.getAnnotation(Default.class).value()));
+                }
+
+                column.setDataType(classToType.apply(f.getType()));
+
+                table.addColumn(column);
+            }
+        }
+
+        return table;
     }
 }

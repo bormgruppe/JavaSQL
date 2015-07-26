@@ -1,14 +1,16 @@
 package ch.sama.sql.jpa;
 
-import ch.sama.sql.dialect.tsql.TSqlSchemaBuilder;
+import ch.sama.sql.dialect.tsql.TSqlSchemaRenderer;
+import ch.sama.sql.query.exception.BadSqlException;
 import org.junit.Test;
 
 import java.util.Date;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
 public class JpaSchemaTest {
+    private static final TSqlSchemaRenderer renderer = new TSqlSchemaRenderer();
+
     @Entity
     private static class Table1 {
         @Column(name = "COLUMN1")
@@ -31,7 +33,7 @@ public class JpaSchemaTest {
     public void classToType() {
         assertEquals(
                 "CREATE TABLE [Table1] (\n\t[COLUMN1] [varchar](MAX) NULL,\n\t[COLUMN2] [float] NULL,\n\t[COLUMN3] [int] NULL,\n\t[COLUMN4] [bit] NULL,\n\t[COLUMN5] [datetime] NULL\n)",
-                TSqlSchemaBuilder.getTableSchema(Table1.class)
+                renderer.render(Table1.class)
         );
     }
 
@@ -48,7 +50,7 @@ public class JpaSchemaTest {
     public void nullable() {
         assertEquals(
                 "CREATE TABLE [Table2] (\n\t[COLUMN1] [varchar](MAX) NULL,\n\t[COLUMN2] [varchar](MAX) NOT NULL\n)",
-                TSqlSchemaBuilder.getTableSchema(Table2.class)
+                renderer.render(Table2.class)
         );
     }
 
@@ -64,7 +66,7 @@ public class JpaSchemaTest {
     public void autoIncrementPrimary() {
         assertEquals(
                 "CREATE TABLE [Table3] (\n\t[P_KEY] [int] IDENTITY(1,1) NOT NULL,\n\tCONSTRAINT [PK_Table3] PRIMARY KEY CLUSTERED (\n\t\t[P_KEY] ASC\n\t)\n) ON [PRIMARY]",
-                TSqlSchemaBuilder.getTableSchema(Table3.class)
+                renderer.render(Table3.class)
         );
     }
 
@@ -75,7 +77,7 @@ public class JpaSchemaTest {
 
     @Test(expected = JpaException.class)
     public void notAnnotated() {
-        TSqlSchemaBuilder.getTableSchema(Table4.class);
+        renderer.render(Table4.class);
     }
 
     @Entity(name = "tblTable5")
@@ -88,7 +90,7 @@ public class JpaSchemaTest {
     public void definedTableName() {
         assertEquals(
                 "CREATE TABLE [tblTable5] (\n\t[COLUMN] [varchar](MAX) NULL\n)",
-                TSqlSchemaBuilder.getTableSchema(Table5.class)
+                renderer.render(Table5.class)
         );
     }
 
@@ -99,19 +101,19 @@ public class JpaSchemaTest {
         private double d;
     }
 
-    @Test(expected = JpaException.class)
+    @Test(expected = BadSqlException.class)
     public void autoIncrOnDouble() {
-        TSqlSchemaBuilder.getTableSchema(Table6.class);
+        renderer.render(Table6.class);
     }
 
     @Entity
     private static class Table7 {
         @Column(name = "COLUMN")
-        private List<String> list;
+        private Object obj;
     }
 
-    @Test(expected = JpaException.class)
+    @Test(expected = BadSqlException.class)
     public void unknownType() {
-        TSqlSchemaBuilder.getTableSchema(Table7.class);
+        renderer.render(Table7.class);
     }
 }

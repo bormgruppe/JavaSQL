@@ -271,8 +271,7 @@ public class Manager {
     public <T> List<T> get(Class<T> clazz, ICondition condition) {
         IResultSetTransformer<List<T>> transformer = new ObjectTransformer<T>(clazz);
 
-        IQuery query = getGetterQuery(clazz, condition);
-        ResultSet resultSet = query(query);
+        ResultSet resultSet = query(getGetterQuery(clazz, condition));
 
         try {
             return transformer.transform(resultSet);
