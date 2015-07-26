@@ -1,13 +1,15 @@
 package ch.sama.sql.jpa;
 
 import ch.sama.sql.dialect.tsql.TSqlQueryFactory;
+import ch.sama.sql.query.base.IValueFactory;
+import ch.sama.sql.query.helper.Condition;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
 public class ManagerTest {
     private static final TSqlQueryFactory fac = new TSqlQueryFactory();
-    private static final Manager manager = new Manager(fac);
+    private static final Manager manager = new Manager(null, fac);
 
     @Entity (name = "TABLE")
     public static class Table1 {
@@ -120,6 +122,24 @@ public class ManagerTest {
         assertEquals(
                 "DELETE FROM [TABLE]\nWHERE ([TABLE].[ID1] = 1 AND [TABLE].[ID2] = 2)",
                 manager.getDeleteQuery(new Table4(1, 2)).getSql()
+        );
+    }
+
+    @Test
+    public void getAll() {
+        assertEquals(
+                "SELECT [TABLE].[ID], [TABLE].[COLUMN]\nFROM [TABLE]",
+                manager.getGetterQuery(Table1.class).getSql()
+        );
+    }
+
+    @Test
+    public void getWithCondition() {
+        IValueFactory value = fac.value();
+
+        assertEquals(
+                "SELECT [TABLE].[ID], [TABLE].[COLUMN]\nFROM [TABLE]\nWHERE [TABLE].[ID] = 1",
+                manager.getGetterQuery(Table1.class, Condition.eq(value.field("TABLE", "ID"), value.numeric(1))).getSql()
         );
     }
 }

@@ -1,6 +1,8 @@
 package ch.sama.sql.jpa;
 
 import ch.sama.sql.dbo.connection.IConnection;
+import ch.sama.sql.dbo.result.IResultSetTransformer;
+import ch.sama.sql.dbo.result.obj.ObjectTransformer;
 import ch.sama.sql.query.base.*;
 import ch.sama.sql.query.exception.BadSqlException;
 import ch.sama.sql.query.exception.ConnectionException;
@@ -10,6 +12,7 @@ import ch.sama.sql.query.helper.condition.ICondition;
 
 import java.lang.reflect.Field;
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -19,11 +22,13 @@ public class Manager {
     private IConnection connection;
     private IQueryFactory factory;
     private IValueFactory value;
+    private ISourceFactory source;
 
     public Manager(IConnection connection, IQueryFactory factory) {
         this.connection = connection;
         this.factory = factory;
         this.value = factory.value();
+        this.source = factory.source();
     }
 
     private void closeStatement(Statement statement) {
@@ -77,6 +82,33 @@ public class Manager {
 
         closeStatement(statement);
         connection.close();
+    }
+
+    private ResultSet query(IQuery query) {
+        Statement statement;
+        try {
+            Connection con = connection.open();
+            statement = con.createStatement();
+        } catch (Exception e) {
+            connection.close();
+
+            throw new ConnectionException(e);
+        }
+
+        ResultSet result = null;
+        try {
+            result = statement.executeQuery(query.getSql());
+        } catch (SQLException e) {
+            closeStatement(statement);
+            connection.close();
+
+            throw new BadSqlException(e);
+        }
+
+        closeStatement(statement);
+        connection.close();
+
+        return result;
     }
 
     public <T> IQuery getInsertQuery(T object) {
@@ -198,5 +230,54 @@ public class Manager {
 
     public <T> void delete(T object) {
         execute(getDeleteQuery(object));
+    }
+
+    public <T> IQuery getGetterQuery(Class<T> clazz) {
+        return getGetterQuery(clazz, null);
+    }
+
+    public <T> IQuery getGetterQuery(Class<T> clazz, ICondition condition) {
+        if (!clazz.isAnnotationPresent(Entity.class)) {
+            throw new JpaException("Object must be annotated with @Entity");
+        }
+
+        String tableName = getTableName(clazz);
+
+        Field[] fields = clazz.getDeclaredFields();
+
+        List<Value> values = new ArrayList<Value>();
+
+        for (Field f : fields) {
+            if (f.isAnnotationPresent(Column.class)) {
+                values.add(value.field(tableName, f.getAnnotation(Column.class).name()));
+            }
+        }
+
+        FromQuery part = factory.query()
+                .select(values.toArray(new Value[values.size()]))
+                .from(source.table(tableName));
+
+        if (condition == null) {
+            return part;
+        } else {
+            return part.where(condition);
+        }
+    }
+
+    public <T> List<T> get(Class<T> clazz) {
+        return get(clazz, null);
+    }
+
+    public <T> List<T> get(Class<T> clazz, ICondition condition) {
+        IResultSetTransformer<List<T>> transformer = new ObjectTransformer<T>(clazz);
+
+        IQuery query = getGetterQuery(clazz, condition);
+        ResultSet resultSet = query(query);
+
+        try {
+            return transformer.transform(resultSet);
+        } catch (SQLException e) {
+            throw new BadSqlException(e);
+        }
     }
 }
