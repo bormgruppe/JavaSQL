@@ -3,11 +3,17 @@ package ch.sama.sql.query.standard;
 import ch.sama.sql.dbo.Field;
 import ch.sama.sql.dbo.IType;
 import ch.sama.sql.dbo.Table;
+import ch.sama.sql.dialect.tsql.type.TYPE;
 import ch.sama.sql.query.base.IQuery;
 import ch.sama.sql.query.base.IQueryRenderer;
 import ch.sama.sql.query.base.IValueFactory;
+import ch.sama.sql.query.exception.BadParameterException;
 import ch.sama.sql.query.helper.Function;
 import ch.sama.sql.query.helper.Value;
+import ch.sama.sql.query.helper.pattern.Dates;
+import ch.sama.sql.query.helper.pattern.Numerics;
+
+import java.util.Date;
 
 public abstract class ValueFactory implements IValueFactory {
     private IQueryRenderer renderer;
@@ -121,5 +127,54 @@ public abstract class ValueFactory implements IValueFactory {
     @Override
     public Value type(IType type) {
         return new Value(type, type.getString());
+    }
+
+    @Override
+    public Value object(Object o) {
+        if (o == null) {
+            return NULL;
+        }
+
+        if (o instanceof Boolean) {
+            return bool((boolean) o);
+        }
+
+        if (o instanceof Integer || o instanceof Short || o instanceof Long) {
+            if (o instanceof Integer) {
+                return numeric((int) o);
+            } else if (o instanceof Short) {
+                return numeric((int) ((short) o));
+            } else {
+                return numeric((int) ((long) o));
+            }
+        }
+
+        if (o instanceof Double || o instanceof Float) {
+            if (o instanceof Double) {
+                return numeric((double) o);
+            } else {
+                return numeric((float) o);
+            }
+        }
+
+        if (o instanceof String) {
+            String s = (String) o;
+
+            if (s.length() == 0 || s.toLowerCase().equals("null")) {
+                return NULL;
+            }
+
+            if (Numerics.isInteger(s)) {
+                return numeric(Integer.parseInt(s));
+            }
+
+            if (Numerics.isFloat(s)) {
+                return numeric(Double.parseDouble(s));
+            }
+
+            return string(s);
+        }
+
+        throw new BadParameterException("Cannot guess {" + o.getClass().getName() + ": " + o.toString() + "}");
     }
 }

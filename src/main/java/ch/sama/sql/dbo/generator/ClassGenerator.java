@@ -51,6 +51,8 @@ public class ClassGenerator<T extends IQueryFactory> {
                 sources.write("\tpublic static final " + sourceClassName + " " + tableVarName + " = new " + sourceClassName + "();\n");
                 generateSourceClass(table, srcFolder, pkg);
 
+                generateObjectClass(table, srcFolder, pkg);
+
                 System.out.println("Generated: " + tableName);
             }
         }
@@ -168,6 +170,69 @@ public class ClassGenerator<T extends IQueryFactory> {
         writer.close();
     }
 
+    private void generateObjectClass(Table table, String srcFolder, String pkg) throws IOException {
+        String objClassName = getObjectClassName(table);
+
+        String sPkg = pkg + ".obj";
+        BufferedWriter writer = createClassFile(srcFolder, sPkg, objClassName);
+
+        writer.write("package " + sPkg + ";\n\n");
+        writer.write("import java.util.List;\n");
+        writer.write("import ch.sama.sql.dbo.result.IResultSetTransformer;\n");
+        writer.write("import ch.sama.sql.dbo.result.obj.ObjectTransformer;\n");
+        writer.write("import ch.sama.sql.jpa.*;\n\n");
+
+        writer.write("@Entity\n");
+        writer.write("public class " + objClassName + " {\n");
+
+        // This is not good, you can't have fields named TRANSFORMER like this..
+        writer.write("\tpublic static final IResultSetTransformer<List<" + objClassName + ">> TRANSFORMER = new ObjectTransformer<>(" + objClassName + ".class);\n\n");
+
+        String prefix = "";
+        for (Field field : table.getColumns()) {
+            String fieldName = field.getName();
+            IType type = field.getDataType();
+
+            if (type instanceof JavaType) {
+                JavaType jType = (JavaType) type;
+
+                writer.write(prefix);
+
+                if (field.isPrimaryKey()) {
+                    writer.write("\t@PrimaryKey\n");
+                }
+
+                if (field.isAutoIncrement()) {
+                    writer.write("\t@AutoIncrement\n");
+                }
+
+                if (field.isNullable()) {
+                    writer.write("\t@Column(name = \"" + fieldName + "\")\n");
+                } else {
+                    writer.write("\t@Column(name = \"" + fieldName + "\", nullable = false)\n");
+                }
+
+                if (field.hasDefaultValue()) {
+                    writer.write("\t@Default(value = \"" + field.getDefaultValue() + "\")\n");
+                }
+
+                String typeName = jType.getJavaClass().getName();
+                if (typeName.startsWith("java.lang")) {
+                    writer.write("\tpublic " + typeName.substring(10) + " " + fieldName + ";");
+                } else {
+                    writer.write("\tpublic " + typeName + " " + fieldName + ";");
+                }
+
+                prefix = "\n\n";
+            } else {
+                // throw exception?
+            }
+        }
+
+        writer.write("\n}");
+        writer.close();
+    }
+
     private BufferedWriter createClassFile(String srcFolder, String pkg, String className) throws IOException {
         String separator = System.getProperty("file.separator");
         String path = pkg.replace(".", separator);
@@ -191,6 +256,10 @@ public class ClassGenerator<T extends IQueryFactory> {
 
     private String getSourceClassName(Table table) {
         return "Src_" + table.getName();
+    }
+
+    private String getObjectClassName(Table table) {
+        return table.getName();
     }
 
     private String getTableVariableName(Table table) {

@@ -1,7 +1,11 @@
 package ch.sama.sql.dialect.tsql;
 
 import ch.sama.sql.dbo.Table;
+import ch.sama.sql.dialect.tsql.type.TYPE;
+import ch.sama.sql.query.exception.BadParameterException;
 import ch.sama.sql.query.helper.Value;
+import ch.sama.sql.query.helper.pattern.Dates;
+import ch.sama.sql.query.helper.pattern.Numerics;
 import ch.sama.sql.query.standard.ValueFactory;
 
 import java.text.SimpleDateFormat;
@@ -31,5 +35,27 @@ public class TSqlValueFactory extends ValueFactory {
     @Override
     public Value string(String s) {
         return new Value(s, "'" + s.replace("'", "''") + "'");
+    }
+
+    @Override
+    public Value object(Object o) {
+        if (o instanceof Date) {
+            return date((Date) o);
+        }
+
+        if (o instanceof String) {
+            String s = (String) o;
+
+            if (Dates.isKnownDate(s)) {
+                return function(
+                        "CONVERT",
+                        type(TYPE.DATETIME_TYPE),
+                        string(Dates.toIsoDateTime(s)),
+                        numeric(21)
+                );
+            }
+        }
+
+        return super.object(o);
     }
 }
