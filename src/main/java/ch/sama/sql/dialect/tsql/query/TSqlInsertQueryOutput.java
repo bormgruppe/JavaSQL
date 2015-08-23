@@ -1,5 +1,6 @@
 package ch.sama.sql.dialect.tsql.query;
 
+import ch.sama.sql.dialect.tsql.TSqlQueryCreator;
 import ch.sama.sql.dialect.tsql.TSqlQueryRenderer;
 import ch.sama.sql.query.base.IQuery;
 import ch.sama.sql.query.helper.Value;
@@ -8,12 +9,12 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TSqlInsertQueryOutput implements IQuery {
-    private TSqlQueryRenderer renderer;
+    private TSqlQueryCreator creator;
     private TSqlInsertQueryFinal parent;
     private List<Value> values;
 
-    public TSqlInsertQueryOutput(TSqlQueryRenderer renderer, TSqlInsertQueryFinal parent, Value[] values) {
-        this.renderer = renderer;
+    public TSqlInsertQueryOutput(TSqlQueryCreator creator, TSqlInsertQueryFinal parent, Value[] values) {
+        this.creator = creator;
         this.parent = parent;
         this.values = Arrays.asList(values);
     }
@@ -29,7 +30,7 @@ public class TSqlInsertQueryOutput implements IQuery {
 
     @Override
     public String getSql() {
-        return renderer.render(this);
+        return creator.renderer().render(this);
     }
 
     @Override
@@ -38,6 +39,6 @@ public class TSqlInsertQueryOutput implements IQuery {
     }
 
     public TSqlSelectQuery select(Value... values) {
-        return new TSqlSelectQuery(renderer, this, values);
+        return creator.selectQuery(this, values);
     }
 }

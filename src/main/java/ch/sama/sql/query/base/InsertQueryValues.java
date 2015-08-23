@@ -6,12 +6,12 @@ import java.util.Arrays;
 import java.util.List;
 
 public class InsertQueryValues implements IQuery {
-    private IQueryRenderer renderer;
+    private IQueryCreator creator;
     private InsertQueryFinal parent;
     private List<Value> values;
 
-    public InsertQueryValues(IQueryRenderer renderer, InsertQueryFinal parent, Value[] values) {
-        this.renderer = renderer;
+    public InsertQueryValues(IQueryCreator creator, InsertQueryFinal parent, Value[] values) {
+        this.creator = creator;
         this.parent = parent;
         this.values = Arrays.asList(values);
     }
@@ -27,7 +27,7 @@ public class InsertQueryValues implements IQuery {
 
     @Override
     public String getSql() {
-        return renderer.render(this);
+        return creator.renderer().render(this);
     }
 
     @Override

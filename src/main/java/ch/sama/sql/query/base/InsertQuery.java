@@ -3,11 +3,11 @@ package ch.sama.sql.query.base;
 import ch.sama.sql.dbo.Table;
 
 public class InsertQuery implements IQuery {
-    private IQueryRenderer renderer;
+    private IQueryCreator creator;
 	private IQuery parent;
 
-    public InsertQuery(IQueryRenderer renderer, IQuery parent) {
-        this.renderer = renderer;
+    public InsertQuery(IQueryCreator creator, IQuery parent) {
+        this.creator = creator;
         this.parent = parent;
     }
 
@@ -18,7 +18,7 @@ public class InsertQuery implements IQuery {
 
     @Override
     public String getSql() {
-        return renderer.render(this);
+        return creator.renderer().render(this);
     }
 
     @Override
@@ -28,7 +28,7 @@ public class InsertQuery implements IQuery {
     }
 	
 	public InsertQueryIM into(Table table) {
-        return new InsertQueryIM(renderer, this, table);
+        return creator.insertQueryIM(this, table);
 	}
     
     public InsertQueryIM into(String table) {

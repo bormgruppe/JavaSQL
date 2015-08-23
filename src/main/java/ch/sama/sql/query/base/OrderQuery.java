@@ -6,12 +6,12 @@ import java.util.Arrays;
 import java.util.List;
 
 public class OrderQuery implements IQuery {
-    private IQueryRenderer renderer;
+    private IQueryCreator creator;
 	private IQuery parent;
 	private List<IOrder> orders;
 
-    public OrderQuery(IQueryRenderer renderer, IQuery parent, IOrder[] orders) {
-        this.renderer = renderer;
+    public OrderQuery(IQueryCreator creator, IQuery parent, IOrder[] orders) {
+        this.creator = creator;
         this.parent = parent;
 
         this.orders = Arrays.asList(orders);
@@ -24,7 +24,7 @@ public class OrderQuery implements IQuery {
 
     @Override
     public String getSql() {
-        return renderer.render(this);
+        return creator.renderer().render(this);
     }
 
     @Override

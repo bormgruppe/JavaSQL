@@ -1,17 +1,18 @@
 package ch.sama.sql.dialect.tsql.query;
 
+import ch.sama.sql.dialect.tsql.TSqlQueryCreator;
 import ch.sama.sql.dialect.tsql.TSqlQueryRenderer;
 import ch.sama.sql.query.base.IQuery;
 import ch.sama.sql.query.helper.condition.ICondition;
 
 public class TSqlIfQuery implements IQuery {
-    private TSqlQueryRenderer renderer;
+    private TSqlQueryCreator creator;
     private IQuery parent;
     private ICondition condition;
     private IQuery query;
 
-    public TSqlIfQuery(TSqlQueryRenderer renderer, IQuery parent, ICondition condition, IQuery query) {
-        this.renderer = renderer;
+    public TSqlIfQuery(TSqlQueryCreator creator, IQuery parent, ICondition condition, IQuery query) {
+        this.creator = creator;
         this.parent = parent;
         this.condition = condition;
         this.query = query;
@@ -32,7 +33,7 @@ public class TSqlIfQuery implements IQuery {
 
     @Override
     public String getSql() {
-        return renderer.render(this);
+        return creator.renderer().render(this);
     }
 
     @Override
@@ -42,6 +43,6 @@ public class TSqlIfQuery implements IQuery {
     }
 
     public TSqlElseQuery otherwise(IQuery query) {
-        return new TSqlElseQuery(renderer, this, query);
+        return creator.elseQuery(this, query);
     }
 }

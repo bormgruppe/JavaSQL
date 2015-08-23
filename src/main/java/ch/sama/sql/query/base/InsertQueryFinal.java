@@ -8,12 +8,12 @@ import java.util.Arrays;
 import java.util.List;
 
 public class InsertQueryFinal implements IQuery {
-    private IQueryRenderer renderer;
+    private IQueryCreator creator;
 	private InsertQueryIM parent;
     private List<Field> fields;
 
-    public InsertQueryFinal(IQueryRenderer renderer, InsertQueryIM parent, Field[] fields) {
-        this.renderer = renderer;
+    public InsertQueryFinal(IQueryCreator creator, InsertQueryIM parent, Field[] fields) {
+        this.creator = creator;
         this.parent = parent;
         this.fields = Arrays.asList(fields);
     }
@@ -25,7 +25,7 @@ public class InsertQueryFinal implements IQuery {
 
     @Override
     public String getSql() {
-        return renderer.render(this);
+        return creator.renderer().render(this);
     }
 
     @Override
@@ -42,14 +42,14 @@ public class InsertQueryFinal implements IQuery {
     }
     
     public SelectQuery select(Value... values) {
-        return new SelectQuery(renderer, this, values);
+        return creator.selectQuery(this, values);
     }
 
     public InsertQueryValues values(Value... values) {
-        return new InsertQueryValues(renderer, this, values);
+        return creator.insertQueryValues(this, values);
     }
 
     public UnionQuery union(IQuery... queries) {
-        return new UnionQuery(renderer, this, queries);
+        return creator.unionQuery(this, queries);
     }
 }

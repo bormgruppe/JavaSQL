@@ -1,5 +1,6 @@
 package ch.sama.sql.dialect.tsql.query;
 
+import ch.sama.sql.dialect.tsql.TSqlQueryCreator;
 import ch.sama.sql.dialect.tsql.TSqlQueryRenderer;
 import ch.sama.sql.query.base.IQuery;
 import ch.sama.sql.query.base.SelectQuery;
@@ -7,14 +8,14 @@ import ch.sama.sql.query.exception.BadParameterException;
 import ch.sama.sql.query.helper.Value;
 
 public class TSqlSelectQuery extends SelectQuery {
-    private TSqlQueryRenderer renderer;
+    private TSqlQueryCreator creator;
     private int top;
 
-    public TSqlSelectQuery(TSqlQueryRenderer renderer, IQuery parent, Value[] v) {
-        super(renderer, parent, v);
+    public TSqlSelectQuery(TSqlQueryCreator creator, IQuery parent, Value[] values) {
+        super(creator, parent, values);
 
         this.top = -1;
-        this.renderer = renderer;
+        this.creator = creator;
     }
 
     public TSqlSelectQuery top(int n) {
@@ -28,7 +29,7 @@ public class TSqlSelectQuery extends SelectQuery {
 
     @Override
     public String getSql() {
-        return renderer.render(this);
+        return creator.renderer().render(this);
     }
 
     public int getTop() {

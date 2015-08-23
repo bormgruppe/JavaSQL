@@ -1,5 +1,6 @@
 package ch.sama.sql.dialect.tsql.query;
 
+import ch.sama.sql.dialect.tsql.TSqlQueryCreator;
 import ch.sama.sql.dialect.tsql.TSqlQueryRenderer;
 import ch.sama.sql.query.base.IQuery;
 import ch.sama.sql.query.base.check.Identifier;
@@ -8,16 +9,16 @@ import ch.sama.sql.query.exception.BadSqlException;
 import ch.sama.sql.query.exception.IllegalIdentifierException;
 
 public class TSqlCteQuery implements IQuery {
-    private TSqlQueryRenderer renderer;
+    private TSqlQueryCreator creator;
 	private IQuery parent;
 	private String name;
 
-    public TSqlCteQuery(TSqlQueryRenderer renderer, IQuery parent, String name) {
+    public TSqlCteQuery(TSqlQueryCreator creator, IQuery parent, String name) {
         if (!Identifier.test(name)) {
             throw new IllegalIdentifierException(name);
         }
 
-        this.renderer = renderer;
+        this.creator = creator;
         this.parent = parent;
         this.name = name;
     }
@@ -29,7 +30,7 @@ public class TSqlCteQuery implements IQuery {
     
     @Override
     public String getSql() {
-        return renderer.render(this);
+        return creator.renderer().render(this);
     }
 
     @Override
@@ -47,6 +48,6 @@ public class TSqlCteQuery implements IQuery {
             throw new BadSqlException("CTE cannot be nested");
         }
 
-		return new TSqlCteQueryFinal(renderer, this, query);
+		return creator.cteQueryFinal(this, query);
 	}
 }

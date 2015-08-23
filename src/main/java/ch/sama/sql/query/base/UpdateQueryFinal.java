@@ -3,12 +3,12 @@ package ch.sama.sql.query.base;
 import ch.sama.sql.query.helper.condition.ICondition;
 
 public class UpdateQueryFinal implements IQuery {
-    private IQueryRenderer renderer;
+    private IQueryCreator creator;
 	private IQuery parent;
     private ICondition condition;
 
-    public UpdateQueryFinal(IQueryRenderer renderer, IQuery parent, ICondition condition) {
-        this.renderer = renderer;
+    public UpdateQueryFinal(IQueryCreator creator, IQuery parent, ICondition condition) {
+        this.creator = creator;
         this.parent = parent;
         this.condition = condition;
     }
@@ -20,7 +20,7 @@ public class UpdateQueryFinal implements IQuery {
 
     @Override
     public String getSql() {
-        return renderer.render(this);
+        return creator.renderer().render(this);
     }
 
     @Override

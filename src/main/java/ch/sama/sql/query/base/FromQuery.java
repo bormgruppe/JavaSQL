@@ -8,12 +8,12 @@ import java.util.Arrays;
 import java.util.List;
 
 public class FromQuery implements IQuery {
-    private IQueryRenderer renderer;
+    private IQueryCreator creator;
 	private IQuery parent;
 	private List<Source> sources;
 
-    public FromQuery(IQueryRenderer renderer, IQuery parent, Source[] sources) {
-        this.renderer = renderer;
+    public FromQuery(IQueryCreator creator, IQuery parent, Source[] sources) {
+        this.creator = creator;
         this.parent = parent;
         this.sources = Arrays.asList(sources);
     }
@@ -25,7 +25,7 @@ public class FromQuery implements IQuery {
     
     @Override
     public String getSql() {
-        return renderer.render(this);
+        return creator.renderer().render(this);
     }
 
     @Override
@@ -39,14 +39,14 @@ public class FromQuery implements IQuery {
 	}
 	
 	public JoinQuery join(Source source) {
-        return new JoinQuery(renderer, this, source);
+        return creator.joinQuery(this, source);
 	}
 	
 	public OrderQuery order(IOrder... orders) {
-        return new OrderQuery(renderer, this, orders);
+        return creator.orderQuery(this, orders);
 	}
 	
 	public WhereQuery where(ICondition condition) {
-        return new WhereQuery(renderer, this, condition);
+        return creator.whereQuery(this, condition);
 	}
 }

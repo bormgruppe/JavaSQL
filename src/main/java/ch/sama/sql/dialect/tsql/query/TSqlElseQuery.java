@@ -1,15 +1,16 @@
 package ch.sama.sql.dialect.tsql.query;
 
+import ch.sama.sql.dialect.tsql.TSqlQueryCreator;
 import ch.sama.sql.dialect.tsql.TSqlQueryRenderer;
 import ch.sama.sql.query.base.IQuery;
 
 public class TSqlElseQuery implements IQuery {
-    private TSqlQueryRenderer renderer;
+    private TSqlQueryCreator creator;
     private IQuery parent;
     private IQuery query;
 
-    public TSqlElseQuery(TSqlQueryRenderer renderer, IQuery parent, IQuery query) {
-        this.renderer = renderer;
+    public TSqlElseQuery(TSqlQueryCreator creator, IQuery parent, IQuery query) {
+        this.creator = creator;
         this.parent = parent;
         this.query = query;
     }
@@ -25,7 +26,7 @@ public class TSqlElseQuery implements IQuery {
 
     @Override
     public String getSql() {
-        return renderer.render(this);
+        return creator.renderer().render(this);
     }
 
     @Override

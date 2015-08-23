@@ -1,6 +1,7 @@
 package ch.sama.sql.dialect.tsql.query;
 
 import ch.sama.sql.dbo.IType;
+import ch.sama.sql.dialect.tsql.TSqlQueryCreator;
 import ch.sama.sql.dialect.tsql.TSqlQueryRenderer;
 import ch.sama.sql.query.base.IQuery;
 import ch.sama.sql.query.base.Query;
@@ -8,39 +9,34 @@ import ch.sama.sql.query.helper.Value;
 import ch.sama.sql.query.helper.condition.ICondition;
 
 public class TSqlQuery extends Query {
-    private TSqlQueryRenderer renderer;
+    private TSqlQueryCreator creator;
 
-    public TSqlQuery(TSqlQueryRenderer renderer) {
-        super(renderer);
+    public TSqlQuery(TSqlQueryCreator creator) {
+        super(creator);
 
-        this.renderer = renderer;
+        this.creator = creator;
     }
 
-    public TSqlQuery(TSqlQueryRenderer renderer, IQuery parent) {
-        super(renderer, parent);
+    public TSqlQuery(TSqlQueryCreator creator, IQuery parent) {
+        super(creator, parent);
 
-        this.renderer = renderer;
-    }
-
-    @Override
-    public TSqlSelectQuery select(Value... v) {
-        return new TSqlSelectQuery(renderer, this, v);
+        this.creator = creator;
     }
 
     @Override
-    public TSqlInsertQuery insert() {
-        return new TSqlInsertQuery(renderer, this);
+    public TSqlSelectQuery select(Value... values) {
+        return creator.selectQuery(this, values);
     }
 
     public TSqlCteQuery with(String alias) {
-        return new TSqlCteQuery(renderer, this, alias);
+        return creator.cteQuery(this, alias);
     }
 
     public TSqlIfQuery doif(ICondition condition, IQuery query) {
-        return new TSqlIfQuery(renderer, this, condition, query);
+        return creator.ifQuery(this, condition, query);
     }
 
     public TSqlDeclareQuery declare(String variable, IType type, Value value) {
-        return new TSqlDeclareQuery(renderer, this, variable, type, value);
+        return creator.declareQuery(this, variable, type, value);
     }
 }

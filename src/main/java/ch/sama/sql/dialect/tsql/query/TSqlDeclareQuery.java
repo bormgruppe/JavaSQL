@@ -1,25 +1,27 @@
 package ch.sama.sql.dialect.tsql.query;
 
 import ch.sama.sql.dbo.IType;
+import ch.sama.sql.dbo.Table;
+import ch.sama.sql.dialect.tsql.TSqlQueryCreator;
 import ch.sama.sql.dialect.tsql.TSqlQueryRenderer;
-import ch.sama.sql.query.base.IQuery;
+import ch.sama.sql.query.base.*;
 import ch.sama.sql.query.base.check.Identifier;
 import ch.sama.sql.query.exception.IllegalIdentifierException;
 import ch.sama.sql.query.helper.Value;
 
-public class TSqlDeclareQuery extends MainQuery {
+public class TSqlDeclareQuery implements IQuery {
+    private TSqlQueryCreator creator;
     private IQuery parent;
     private String variable;
     private IType type;
     private Value value;
 
-    public TSqlDeclareQuery(TSqlQueryRenderer renderer, IQuery parent, String variable, IType type, Value value) {
-        super(renderer);
-
+    public TSqlDeclareQuery(TSqlQueryCreator creator, IQuery parent, String variable, IType type, Value value) {
         if (!Identifier.test(variable)) {
             throw new IllegalIdentifierException(variable);
         }
 
+        this.creator = creator;
         this.parent = parent;
         this.variable = variable;
         this.type = type;
@@ -33,7 +35,7 @@ public class TSqlDeclareQuery extends MainQuery {
 
     @Override
     public String getSql() {
-        return getRenderer().render(this);
+        return creator.renderer().render(this);
     }
 
     @Override
@@ -55,6 +57,34 @@ public class TSqlDeclareQuery extends MainQuery {
     }
 
     public TSqlDeclareQuery declare(String variable, IType type, Value value) {
-        return new TSqlDeclareQuery(getRenderer(), this, variable, type, value);
+        return creator.declareQuery(this, variable, type, value);
+    }
+
+    public TSqlCteQuery with(String name) {
+        return creator.cteQuery(this, name);
+    }
+
+    public TSqlSelectQuery select(Value... values) {
+        return creator.selectQuery(this, values);
+    }
+
+    public InsertQuery insert() {
+        return creator.insertQuery(this);
+    }
+
+    public DeleteQuery delete() {
+        return creator.deleteQuery(this);
+    }
+
+    public UpdateQuery update(Table table) {
+        return creator.updateQuery(this, table);
+    }
+
+    public UpdateQuery update(String table) {
+        return update(new Table(table));
+    }
+
+    public UnionQuery union(IQuery... queries) {
+        return creator.unionQuery(this, queries);
     }
 }

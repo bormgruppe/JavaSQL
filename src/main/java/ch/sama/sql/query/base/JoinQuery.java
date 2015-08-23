@@ -12,13 +12,13 @@ public class JoinQuery implements IQuery {
         CROSS
     }
 
-    private IQueryRenderer renderer;
+    private IQueryCreator creator;
 	private IQuery parent;
 	private Source source;
 	private TYPE type;
 
-    public JoinQuery(IQueryRenderer renderer, IQuery parent, Source source) {
-        this.renderer = renderer;
+    public JoinQuery(IQueryCreator creator, IQuery parent, Source source) {
+        this.creator = creator;
         this.parent = parent;
         this.source = source;
         this.type = null;
@@ -31,7 +31,7 @@ public class JoinQuery implements IQuery {
 
     @Override
     public String getSql() {
-        return renderer.render(this);
+        return creator.renderer().render(this);
     }
 
     @Override
@@ -74,6 +74,6 @@ public class JoinQuery implements IQuery {
 	}
 	
 	public JoinQueryFinal on(ICondition condition) {
-		return new JoinQueryFinal(renderer, this, condition);
+		return creator.joinQueryFinal(this, condition);
 	}
 }

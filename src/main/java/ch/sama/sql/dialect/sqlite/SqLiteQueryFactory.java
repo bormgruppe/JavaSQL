@@ -4,11 +4,24 @@ import ch.sama.sql.query.base.IQueryFactory;
 import ch.sama.sql.query.base.Query;
 
 public class SqLiteQueryFactory implements IQueryFactory {
+    private static final SqLiteQueryRenderer renderer = new SqLiteQueryRenderer();
+    private static final SqLiteQueryCreator creator = new SqLiteQueryCreator();
+
     private static final SqLiteValueFactory value = new SqLiteValueFactory();
     private static final SqLiteSourceFactory source = new SqLiteSourceFactory();
-    private static final SqLiteQueryRenderer renderer = new SqLiteQueryRenderer();
+
     private static final SqLiteConditionRenderer condition = new SqLiteConditionRenderer();
     private static final SqLiteOrderRenderer order = new SqLiteOrderRenderer();
+
+    @Override
+    public SqLiteQueryRenderer renderer() {
+        return renderer;
+    }
+
+    @Override
+    public SqLiteQueryCreator creator() {
+        return creator;
+    }
 
     @Override
     public SqLiteValueFactory value() {
@@ -18,11 +31,6 @@ public class SqLiteQueryFactory implements IQueryFactory {
     @Override
     public SqLiteSourceFactory source() {
         return source;
-    }
-
-    @Override
-    public SqLiteQueryRenderer renderer() {
-        return renderer;
     }
 
     @Override
@@ -37,6 +45,6 @@ public class SqLiteQueryFactory implements IQueryFactory {
 
     @Override
     public Query query() {
-        return new Query(renderer);
+        return creator.query();
     }
 }

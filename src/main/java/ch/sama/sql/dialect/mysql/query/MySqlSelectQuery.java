@@ -1,5 +1,6 @@
 package ch.sama.sql.dialect.mysql.query;
 
+import ch.sama.sql.dialect.mysql.MySqlQueryCreator;
 import ch.sama.sql.dialect.mysql.MySqlQueryRenderer;
 import ch.sama.sql.query.base.IQuery;
 import ch.sama.sql.query.base.SelectQuery;
@@ -8,21 +9,21 @@ import ch.sama.sql.query.helper.Value;
 import ch.sama.sql.query.helper.condition.ICondition;
 
 public class MySqlSelectQuery extends SelectQuery {
-    private MySqlQueryRenderer renderer;
+    private MySqlQueryCreator creator;
 
-    public MySqlSelectQuery(MySqlQueryRenderer renderer, IQuery parent, Value[] v) {
-        super(renderer, parent, v);
+    public MySqlSelectQuery(MySqlQueryCreator creator, IQuery parent, Value[] values) {
+        super(creator, parent, values);
 
-        this.renderer = renderer;
+        this.creator = creator;
     }
 
     @Override
-    public MySqlFromQuery from(Source... s) {
-        return new MySqlFromQuery(renderer, this, s);
+    public MySqlFromQuery from(Source... sources) {
+        return creator.fromQuery(this, sources);
     }
 
     @Override
-    public MySqlWhereQuery where(ICondition c) {
-        return new MySqlWhereQuery(renderer, this, c);
+    public MySqlWhereQuery where(ICondition condition) {
+        return creator.whereQuery(this, condition);
     }
 }

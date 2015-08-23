@@ -4,15 +4,15 @@ import java.util.Arrays;
 import java.util.List;
 
 public class UnionQuery implements IQuery {
-    private IQueryRenderer renderer;
+    private IQueryCreator creator;
     private IQuery parent;
     private List<IQuery> queries;
 
-    public UnionQuery(IQueryRenderer renderer, IQuery parent, IQuery[] q) {
-        this.renderer = renderer;
+    public UnionQuery(IQueryCreator creator, IQuery parent, IQuery[] queries) {
+        this.creator = creator;
         this.parent = parent;
 
-        this.queries = Arrays.asList(q);
+        this.queries = Arrays.asList(queries);
     }
 
     @Override
@@ -22,7 +22,7 @@ public class UnionQuery implements IQuery {
 
     @Override
     public String getSql() {
-        return renderer.render(this);
+        return creator.renderer().render(this);
     }
 
     @Override
