@@ -1,12 +1,12 @@
 package ch.sama.sql.dialect.tsql.grammar.visitor;
 
+import ch.sama.sql.dialect.tsql.TSqlQueryCreator;
 import ch.sama.sql.dialect.tsql.TSqlQueryFactory;
-import ch.sama.sql.dialect.tsql.TSqlQueryRenderer;
 import ch.sama.sql.dialect.tsql.grammar.antlr.SqlBaseVisitor;
 import ch.sama.sql.dialect.tsql.grammar.antlr.SqlParser;
 import ch.sama.sql.dialect.tsql.query.TSqlQuery;
-import ch.sama.sql.dialect.tsql.query.TSqlSelectQuery;
-import ch.sama.sql.query.base.*;
+import ch.sama.sql.query.base.IQuery;
+import ch.sama.sql.query.base.JoinQuery;
 import ch.sama.sql.query.helper.Source;
 import ch.sama.sql.query.helper.Value;
 import ch.sama.sql.query.helper.condition.ICondition;
@@ -15,7 +15,7 @@ import ch.sama.sql.query.helper.order.IOrder;
 import java.util.List;
 
 public class QueryVisitor extends SqlBaseVisitor<IQuery> {
-    private TSqlQueryRenderer renderer;
+    private TSqlQueryCreator creator;
 
     private ValueVisitor valueVisitor;
     private ValueListVisitor valueListVisitor;
@@ -26,7 +26,7 @@ public class QueryVisitor extends SqlBaseVisitor<IQuery> {
     private OrderListVisitor orderListVisitor;
 
     public QueryVisitor(TSqlQueryFactory factory) {
-        this.renderer = factory.renderer();
+        this.creator = factory.creator();
 
         this.valueVisitor = new ValueVisitor(factory.value());
         this.valueListVisitor = new ValueListVisitor(valueVisitor);
@@ -88,7 +88,7 @@ public class QueryVisitor extends SqlBaseVisitor<IQuery> {
 
     @Override
     public IQuery visitDataStatement(SqlParser.DataStatementContext ctx) {
-        IQuery base = new TSqlQuery(renderer);
+        IQuery base = creator.query();
 
         IQuery union = visit(ctx.unionStatement());
 
@@ -126,7 +126,7 @@ public class QueryVisitor extends SqlBaseVisitor<IQuery> {
         if (ctx.unionStatement() != null) {
             IQuery union = visit(ctx.unionStatement());
 
-            IQuery query = new TSqlQuery(renderer);
+            IQuery query = creator.query();
             chain(statement, query);
             chain(query, union);
         }
@@ -138,7 +138,7 @@ public class QueryVisitor extends SqlBaseVisitor<IQuery> {
     public IQuery visitCteStatement(SqlParser.CteStatementContext ctx) {
         String alias = ctx.sqlIdentifier().Identifier().getText();
 
-        TSqlQuery base = new TSqlQuery(renderer);
+        TSqlQuery base = creator.query();
         return base.with(alias).as(visit(ctx.statement()));
     }
 
@@ -169,21 +169,21 @@ public class QueryVisitor extends SqlBaseVisitor<IQuery> {
     public IQuery visitSelectStatement(SqlParser.SelectStatementContext ctx) {
         Value[] values = getValueList(ctx.valueList());
 
-        return new TSqlSelectQuery(renderer, null, values);
+        return creator.selectQuery(null, values);
     }
 
     @Override
     public IQuery visitFromStatement(SqlParser.FromStatementContext ctx) {
         Source[] sources = getSourceList(ctx.sourceList());
 
-        return new FromQuery(renderer, null, sources);
+        return creator.fromQuery(null, sources);
     }
 
     @Override
     public IQuery visitJoinStatement(SqlParser.JoinStatementContext ctx) {
         Source source = getSource(ctx.source());
 
-        JoinQuery query = new JoinQuery(renderer, null, source);
+        JoinQuery query = creator.joinQuery(null, source);
 
         ICondition condition = getCondition(ctx.condition());
 
@@ -212,13 +212,13 @@ public class QueryVisitor extends SqlBaseVisitor<IQuery> {
     public IQuery visitWhereStatement(SqlParser.WhereStatementContext ctx) {
         ICondition condition = getCondition(ctx.condition());
 
-        return new WhereQuery(renderer, null, condition);
+        return creator.whereQuery(null, condition);
     }
 
     @Override
     public IQuery visitOrderStatement(SqlParser.OrderStatementContext ctx) {
         IOrder[] orders = getOrderList(ctx.orderList());
 
-        return new OrderQuery(renderer, null, orders);
+        return creator.orderQuery(null, orders);
     }
 }
