@@ -3,37 +3,50 @@ package ch.sama.sql.dialect.tsql;
 import ch.sama.sql.dbo.Field;
 import ch.sama.sql.dbo.IType;
 import ch.sama.sql.dbo.Table;
+import ch.sama.sql.dbo.schema.ISchemaDiff;
+import ch.sama.sql.dbo.schema.ISchemaRenderer;
+import ch.sama.sql.dbo.schema.SchemaUtil;
 import ch.sama.sql.dialect.tsql.type.TYPE;
 import ch.sama.sql.jpa.*;
 import ch.sama.sql.query.exception.BadSqlException;
 import ch.sama.sql.query.helper.Value;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class TSqlSchemaRenderer {
-    private static String renderTableName(Table t) {
-        String schema = t.getSchema();
+public class TSqlSchemaRenderer implements ISchemaRenderer {
+    private static final TSqlSchemaRenderer self = new TSqlSchemaRenderer();
+
+    @Override
+    public String renderName(Table table) {
+        String schema = table.getSchema();
         if (schema == null) {
-            return "[" + t.getName() + "]";
+            return "[" + table.getName() + "]";
         } else {
-            return "[" + schema + "].["+  t.getName() + "]";
+            return "[" + schema + "].["+  table.getName() + "]";
         }
     }
 
-    public static String getTableSchema(Table table) throws BadSqlException {
+    @Override
+    public String renderName(Field field) {
+        return "[" + field.getName() + "]";
+    }
+
+    @Override
+    public String render(Table table) throws BadSqlException {
         // TODO: Ignores FK constraints
 
         StringBuilder builder = new StringBuilder();
         String prefix = "";
 
         builder.append("CREATE TABLE ");
-        builder.append(renderTableName(table));
+        builder.append(renderName(table));
         builder.append(" (\n");
 
         for (Field field : table.getColumns()) {
             builder.append(prefix);
             builder.append("\t");
-            builder.append(getColumnSchema(field));
+            builder.append(render(field));
 
             prefix = ",\n";
         }
@@ -62,7 +75,8 @@ public class TSqlSchemaRenderer {
         return builder.toString();
     }
 
-    private static String getColumnSchema(Field field) {
+    @Override
+    public String render(Field field) throws BadSqlException {
         StringBuilder builder = new StringBuilder();
 
         String colName = field.getName();
@@ -121,6 +135,18 @@ public class TSqlSchemaRenderer {
         return builder.toString();
     }
 
+    public static String getSchemaDiff(TSqlSchema lhs, TSqlSchema rhs) {
+        List<ISchemaDiff> diff = SchemaUtil.diff(lhs, rhs);
+
+        return diff.stream()
+                .map(d -> d.getString(self))
+                .collect(Collectors.joining("\n"));
+    }
+
+    public static String getTableSchema(Table table) throws BadSqlException {
+        return self.render(table);
+    }
+
     public static <T> String getTableSchema(Class<T> clazz) throws JpaException, BadSqlException {
         if (!clazz.isAnnotationPresent(Entity.class)) {
             throw new JpaException("Class must be annotated with @Entity");
@@ -177,63 +203,6 @@ public class TSqlSchemaRenderer {
             }
         }
 
-        return getTableSchema(table);
-    }
-
-    public static String getSchemaDiff(TSqlSchema lhs, TSqlSchema rhs) {
-        // lhs: actual
-        // rhs: expected
-
-        // This only executes non-destructive updates
-        //  - No drop table
-        //  - No drop column
-        //  - No change of PRIMARY KEY (that would require DROP and re-CREATE)
-
-        StringBuilder builder = new StringBuilder();
-        String prefix = "";
-
-        List<Table> rhTables = rhs.getTables();
-
-        for (Table tr : rhTables) {
-            String rhTableName = tr.getName();
-
-            if (lhs.hasTable(rhTableName)) {
-                Table tl = lhs.getTable(rhTableName);
-                List<Field> rhColumns = tr.getColumns();
-
-                for (Field fr : rhColumns) {
-                    String rhColumnName = fr.getName();
-
-                    if (tl.hasColumn(rhColumnName)) {
-                        Field fl = tl.getColumn(rhColumnName);
-
-                        if (!fr.compareTo(fl)) {
-                            builder.append(prefix);
-                            builder.append("ALTER TABLE ");
-                            builder.append(renderTableName(tr));
-                            builder.append(" ALTER COLUMN ");
-                            builder.append(getColumnSchema(fr));
-
-                            prefix = "\n";
-                        }
-                    } else {
-                        builder.append(prefix);
-                        builder.append("ALTER TABLE [");
-                        builder.append(renderTableName(tr));
-                        builder.append(" ADD ");
-                        builder.append(getColumnSchema(fr));
-
-                        prefix = "\n";
-                    }
-                }
-            } else {
-                builder.append(prefix);
-                builder.append(getTableSchema(tr));
-
-                prefix = "\n";
-            }
-        }
-
-        return builder.toString();
+        return self.render(table);
     }
 }

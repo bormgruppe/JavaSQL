@@ -1,4 +1,6 @@
-package ch.sama.sql.dbo;
+package ch.sama.sql.dbo.schema;
+
+import ch.sama.sql.dbo.Table;
 
 import java.util.List;
 

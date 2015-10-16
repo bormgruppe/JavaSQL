@@ -2,7 +2,7 @@ package ch.sama.sql.dialect.mysql;
 
 import ch.sama.sql.dbo.Field;
 import ch.sama.sql.dbo.GenericType;
-import ch.sama.sql.dbo.ISchema;
+import ch.sama.sql.dbo.schema.ISchema;
 import ch.sama.sql.dbo.Table;
 import ch.sama.sql.dbo.connection.IQueryExecutor;
 import ch.sama.sql.dbo.generator.ITableFilter;

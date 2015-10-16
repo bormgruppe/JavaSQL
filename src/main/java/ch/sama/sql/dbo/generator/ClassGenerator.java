@@ -1,7 +1,7 @@
 package ch.sama.sql.dbo.generator;
 
 import ch.sama.sql.dbo.Field;
-import ch.sama.sql.dbo.ISchema;
+import ch.sama.sql.dbo.schema.ISchema;
 import ch.sama.sql.dbo.IType;
 import ch.sama.sql.dbo.Table;
 import ch.sama.sql.query.base.IQueryFactory;
