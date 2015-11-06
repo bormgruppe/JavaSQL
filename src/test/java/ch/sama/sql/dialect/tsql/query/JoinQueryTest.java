@@ -98,6 +98,16 @@ public class JoinQueryTest {
     }
 
     @Test
+    public void fullOuterJoin() {
+        assertEquals(
+                "SELECT [F]\nFROM [T]\nFULL OUTER JOIN [J] ON 1 = 1",
+                query
+                        .join(source.table("J")).full().outer().on(cond)
+                .getSql()
+        );
+    }
+
+    @Test
     public void crossJoin() {
         assertEquals(
                 "SELECT [F]\nFROM [T]\nCROSS JOIN [J] ON 1 = 1",

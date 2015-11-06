@@ -95,9 +95,13 @@ public abstract class QueryRenderer implements IQueryRenderer {
 
         builder.append("\n");
 
-        JoinQuery.TYPE type = query.getType();
-        if (type != null) {
-            builder.append(type.getName());
+        if (query.hasTypes()) {
+            builder.append(
+                    query.getTypes().stream()
+                            .map(JoinQuery.TYPE::getName)
+                            .collect(Collectors.joining(" "))
+            );
+
             builder.append(" ");
         } else {
             // builder.append("INNER "); // Don't really like it

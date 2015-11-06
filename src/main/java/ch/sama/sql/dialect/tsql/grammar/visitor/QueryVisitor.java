@@ -22,6 +22,8 @@ public class QueryVisitor extends SqlBaseVisitor<IQuery> {
     private SourceVisitor sourceVisitor;
     private SourceListVisitor sourceListVisitor;
 
+    private JoinTypeVisitor joinTypeVisitor;
+
     private ConditionVisitor conditionVisitor;
     private OrderListVisitor orderListVisitor;
 
@@ -32,6 +34,8 @@ public class QueryVisitor extends SqlBaseVisitor<IQuery> {
         this.valueListVisitor = new ValueListVisitor(valueVisitor);
         this.sourceVisitor = new SourceVisitor(this, factory.source());
         this.sourceListVisitor = new SourceListVisitor(sourceVisitor);
+
+        this.joinTypeVisitor = new JoinTypeVisitor();
 
         this.conditionVisitor = new ConditionVisitor(this, valueVisitor);
         this.orderListVisitor = new OrderListVisitor(valueVisitor);
@@ -187,25 +191,15 @@ public class QueryVisitor extends SqlBaseVisitor<IQuery> {
 
         ICondition condition = getCondition(ctx.condition());
 
-        String joinType = "";
         if (ctx.joinType() != null) {
-            joinType = ctx.joinType().getText().toLowerCase();
+            List<JoinQuery.TYPE> joinTypes = joinTypeVisitor.visit(ctx.joinType());
+
+            for (JoinQuery.TYPE type : joinTypes) {
+                query = query.type(type);
+            }
         }
 
-        switch (joinType) {
-            case "left":
-                return query.left().on(condition);
-            case "right":
-                return query.right().on(condition);
-            case "inner":
-                return query.inner().on(condition);
-            case "full":
-                return query.full().on(condition);
-            case "cross":
-                return query.cross().on(condition);
-            default:
-                return query.on(condition);
-        }
+        return query.on(condition);
     }
 
     @Override

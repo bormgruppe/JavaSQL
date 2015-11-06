@@ -31,6 +31,7 @@ Null : [nN][uU][lL][lL] ;
 Left : [lL][eE][fF][tT] ;
 Right : [rR][iI][gG][hH][tT] ;
 Inner : [iI][nN][nN][eE][rR] ;
+Outer: [oO][uU][tT][eE][rR] ;
 Full : [fF][uU][lL][lL] ;
 Cross : [cC][rR][oO][sS][sS] ;
 Not : [nN][oO][tT] ;
@@ -198,12 +199,24 @@ fromStatement
     : From sourceList
     ;
 
-joinType
+joinDirection
     : Left
     | Right
-    | Inner
     | Full
-    | Cross
+    ;
+
+joinTypeSpecial
+    : Cross
+    | Inner
+    ;
+
+joinTypeOuter
+    : joinDirection Outer?
+    ;
+
+joinType
+    : joinTypeSpecial
+    | joinTypeOuter
     ;
 
 joinStatement
