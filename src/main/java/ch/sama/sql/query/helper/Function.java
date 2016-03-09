@@ -4,8 +4,7 @@ import ch.sama.sql.query.base.IQueryRenderer;
 import ch.sama.sql.query.base.check.Identifier;
 import ch.sama.sql.query.exception.IllegalIdentifierException;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,10 +18,15 @@ public class Function {
         }
 
         this.name = name;
+        this.parameters = Arrays.asList(parameters);
+    }
 
-        this.parameters = new ArrayList<Value>();
+    public String getName() {
+        return name;
+    }
 
-        Collections.addAll(this.parameters, parameters);
+    public List<Value> getParameters() {
+        return parameters;
     }
 
     // This function exists, because I don't think any DB actually has a different form of rendering functions

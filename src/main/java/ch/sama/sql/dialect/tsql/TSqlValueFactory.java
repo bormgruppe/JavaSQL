@@ -5,6 +5,7 @@ import ch.sama.sql.dbo.Table;
 import ch.sama.sql.query.base.check.Identifier;
 import ch.sama.sql.query.exception.BadParameterException;
 import ch.sama.sql.query.exception.IllegalIdentifierException;
+import ch.sama.sql.query.helper.Function;
 import ch.sama.sql.query.helper.Value;
 import ch.sama.sql.query.standard.ValueFactory;
 
@@ -51,6 +52,15 @@ public class TSqlValueFactory extends ValueFactory {
         }
 
         return function(fnc.getName(), arguments);
+    }
+
+    public Value udf(String schema, String name, Value... arguments) {
+        if (!Identifier.test(schema)) {
+            throw new IllegalIdentifierException("Illegal schema name: " + schema);
+        }
+
+        Function function = new Function(name, arguments);
+        return new Value(function, renderer.renderObjectName(schema) + "." + renderer.render(function));
     }
 
     public Value cast(Value value, IType type) {

@@ -174,6 +174,16 @@ public class ValueTest {
         value.function(FUNCTION.COALESCE);
     }
 
+    @Test (expected = IllegalIdentifierException.class)
+    public void udfWithBadSchema() {
+        value.udf("", "foo", value.field("FIELD"));
+    }
+
+    @Test
+    public void udf() {
+        assertEquals("[dbo].foo([FIELD])", value.udf("dbo", "foo", value.field("FIELD")).getValue());
+    }
+
     @Test
     public void cast() {
         assertEquals("CAST('12' AS int)", value.cast(value.string("12"), TYPE.INT_TYPE).getValue());
