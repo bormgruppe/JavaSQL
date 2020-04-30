@@ -1,5 +1,7 @@
 package ch.sama.sql.query.helper.pattern;
 
+import org.apache.commons.lang3.math.NumberUtils;
+
 public class Numerics {
     public static final String INT = "^-?(0|[1-9]\\d*)$";
     public static final String FLOAT = "^-?((0|[1-9]\\d*)\\.\\d*|\\.\\d+)$";
@@ -9,6 +11,6 @@ public class Numerics {
     }
 
     public static boolean isFloat(String s) {
-        return s != null && s.matches(FLOAT);
+        return NumberUtils.isCreatable(s);
     }
 }
