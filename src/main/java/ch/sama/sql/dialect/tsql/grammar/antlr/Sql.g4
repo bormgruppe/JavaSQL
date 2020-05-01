@@ -182,12 +182,12 @@ fullStatement
     ;
 
 dataStatement
-    : cteStatementHead unionStatement
-    | unionStatement
+    : cteStatementHead unionAllStatement
+    | unionAllStatement
     ;
 
-unionStatement
-    : unionStatement Union All statement
+unionAllStatement
+    : unionAllStatement Union All statement
     | statement
     ;
 

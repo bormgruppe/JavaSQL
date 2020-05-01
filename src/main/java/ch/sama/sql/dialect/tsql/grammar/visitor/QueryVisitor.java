@@ -94,7 +94,7 @@ public class QueryVisitor extends SqlBaseVisitor<IQuery> {
     public IQuery visitDataStatement(SqlParser.DataStatementContext ctx) {
         IQuery base = new TSqlQuery(renderer);
 
-        IQuery union = visit(ctx.unionStatement());
+        IQuery union = visit(ctx.unionAllStatement());
 
         if (ctx.cteStatementHead() != null) {
             IQuery cteBlock = chain(visit(ctx.cteStatementHead()), base);
@@ -124,11 +124,11 @@ public class QueryVisitor extends SqlBaseVisitor<IQuery> {
     }
 
     @Override
-    public IQuery visitUnionStatement(SqlParser.UnionStatementContext ctx) {
+    public IQuery visitUnionAllStatement(SqlParser.UnionAllStatementContext ctx) {
         IQuery statement = visit(ctx.statement());
 
-        if (ctx.unionStatement() != null) {
-            IQuery union = visit(ctx.unionStatement());
+        if (ctx.unionAllStatement() != null) {
+            IQuery union = visit(ctx.unionAllStatement());
 
             IQuery query = new TSqlQuery(renderer);
             chain(statement, query);

@@ -82,10 +82,10 @@ public class PrintVisitor extends SqlBaseVisitor<Void> {
     }
 
     @Override
-    public Void visitUnionStatement(SqlParser.UnionStatementContext ctx) {
-        if (ctx.unionStatement() != null) {
-            visit(ctx.unionStatement());
-            appendIndented("union");
+    public Void visitUnionAllStatement(SqlParser.UnionAllStatementContext ctx) {
+        if (ctx.unionAllStatement() != null) {
+            visit(ctx.unionAllStatement());
+            appendIndented("union all");
         }
 
         visit(ctx.statement());

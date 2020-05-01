@@ -39,7 +39,7 @@ public abstract class QueryRenderer implements IQueryRenderer {
     }
 
     @Override
-    public String render(UnionQuery query) {
+    public String render(UnionAllQuery query) {
         StringBuilder builder = new StringBuilder();
 
         prependParentIfExists(builder, query);
