@@ -161,7 +161,7 @@ public class InsertQueryTest {
                 sql.query()
                         .insert().into("TABLE")
                         .columns("FIELD1", "FIELD2")
-                        .union(
+                    .unionAll(
                                 sql.query().select(value.string("A"), value.string("B")),
                                 sql.query().select(value.string("C"), value.string("D"))
                         )

@@ -104,7 +104,7 @@ public class DeclareSetQueryTest {
                                 sql.query()
                                         .select(value.variable("VAR").as("ID"))
                         )
-                        .union(
+                    .unionAll(
                                 sql.query()
                                         .select(value.field("ID"))
                                         .from(source.table("cte1")),

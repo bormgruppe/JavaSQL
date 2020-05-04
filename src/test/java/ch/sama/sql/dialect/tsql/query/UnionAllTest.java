@@ -95,7 +95,7 @@ public class UnionAllTest {
                                 sql.query()
                                         .select(value.numeric(1).as("ID"))
                         )
-                        .union(
+                    .unionAll(
                                 sql.query()
                                         .select(value.field("ID"))
                                         .from(source.table("cte")),
@@ -113,7 +113,7 @@ public class UnionAllTest {
                 "DECLARE @VAR AS int\nSET @VAR = 1;\nSELECT @VAR AS [ID]\nUNION ALL\nSELECT [ID]\nFROM [TABLE]",
                 sql.query()
                         .declare("VAR", TYPE.INT_TYPE, value.numeric(1))
-                        .union(
+                    .unionAll(
                                 sql.query()
                                         .select(value.variable("VAR").as("ID")),
                                 sql.query()
