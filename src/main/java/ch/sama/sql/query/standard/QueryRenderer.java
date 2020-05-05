@@ -54,6 +54,21 @@ public abstract class QueryRenderer implements IQueryRenderer {
     }
 
     @Override
+    public String render(UnionQuery query) {
+        StringBuilder builder = new StringBuilder();
+
+        prependParentIfExists(builder, query);
+
+        builder.append(
+            query.getQueries().stream()
+                .map(IQuery::getSql)
+                .collect(Collectors.joining("\nUNION\n"))
+        );
+
+        return builder.toString();
+    }
+
+    @Override
     public String render(SelectQuery query) {
         StringBuilder builder = new StringBuilder();
 

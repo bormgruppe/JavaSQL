@@ -39,6 +39,7 @@ Not : [nN][oO][tT] ;
 Like : [lL][iI][kK][eE] ;
 Is : [iI][sS] ;
 With : [wW][iI][tT][hH] ;
+UnionAll: Union Whitespace All;
 Union : [uU][nN][iI][oO][nN] ;
 All : [aA][lL][lL] ;
 In : [iI][nN] ;
@@ -182,12 +183,18 @@ fullStatement
     ;
 
 dataStatement
-    : cteStatementHead unionAllStatement
+    : cteStatementHead (unionAllStatement | unionStatement)
     | unionAllStatement
+    | unionStatement
     ;
 
 unionAllStatement
-    : unionAllStatement Union All statement
+    : unionAllStatement UnionAll statement
+    | statement
+    ;
+
+unionStatement
+    : unionStatement Union statement
     | statement
     ;
 

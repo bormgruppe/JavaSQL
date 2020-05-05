@@ -12,6 +12,8 @@ public interface IQueryRenderer {
     public String render(Query query);
 
     public String render(UnionAllQuery query);
+
+    public String render(UnionQuery query);
     public String render(SelectQuery query);
     public String render(FromQuery query);
     public String render(JoinQuery query);

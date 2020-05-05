@@ -55,4 +55,8 @@ public class Query implements IQuery {
     public UnionAllQuery unionAll(IQuery... queries) {
         return new UnionAllQuery(renderer, this, queries);
     }
+
+    public UnionQuery union(IQuery... queries) {
+        return new UnionQuery(renderer, this, queries);
+    }
 }
