@@ -3,8 +3,8 @@ sql
 		select
 			value
 				primary
-					numeric: 11
-	union
+					numeric: 1
+	union all
 	statement
 		select
 			value

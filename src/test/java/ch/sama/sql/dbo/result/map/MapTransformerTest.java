@@ -38,7 +38,7 @@ public class MapTransformerTest {
     public void multiResult() {
         List<MapResult> results = executor.query(
                 sql.query()
-                        .union(
+                    .unionAll(
                                 sql.query().select(value.numeric(1)),
                                 sql.query().select(value.numeric(2)),
                                 sql.query().select(value.numeric(3))

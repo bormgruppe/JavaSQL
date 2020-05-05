@@ -3,12 +3,12 @@ package ch.sama.sql.query.base;
 import java.util.Arrays;
 import java.util.List;
 
-public class UnionQuery implements IQuery {
+public class UnionAllQuery implements IQuery {
     private IQueryRenderer renderer;
     private IQuery parent;
     private List<IQuery> queries;
 
-    public UnionQuery(IQueryRenderer renderer, IQuery parent, IQuery[] queries) {
+    public UnionAllQuery(IQueryRenderer renderer, IQuery parent, IQuery[] queries) {
         this.renderer = renderer;
         this.parent = parent;
 

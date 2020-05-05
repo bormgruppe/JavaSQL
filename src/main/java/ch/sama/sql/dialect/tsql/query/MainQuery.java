@@ -40,6 +40,10 @@ abstract class MainQuery implements IQuery {
         return update(new Table(table));
     }
 
+    public UnionAllQuery unionAll(IQuery... queries) {
+        return new UnionAllQuery(renderer, this, queries);
+    }
+
     public UnionQuery union(IQuery... queries) {
         return new UnionQuery(renderer, this, queries);
     }
