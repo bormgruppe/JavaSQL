@@ -2,7 +2,7 @@ package ch.sama.sql.query.helper.pattern;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class NumericsTest {
     @Test
@@ -93,5 +93,14 @@ public class NumericsTest {
     @Test
     public void trailingZeroIsFloat() {
         assertEquals(true, Numerics.isFloat("1.00"));
+    }
+
+    @Test
+    public void exponentialNotationIsFloat() {
+        assertTrue(Numerics.isFloat("5E-10"));
+        assertTrue(Numerics.isFloat("5E+10"));
+        assertTrue(Numerics.isFloat("5.3E10"));
+        assertTrue(Numerics.isFloat("5.3e10"));
+        assertFalse(Numerics.isFloat("5.3abc10"));
     }
 }
