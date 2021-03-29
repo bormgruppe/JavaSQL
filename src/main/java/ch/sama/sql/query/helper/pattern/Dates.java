@@ -14,11 +14,18 @@ public class Dates {
         return sdf;
     }
 
-    public static final SimpleDateFormat[] GER_DATE = { createSDF("dd.MM.yyyy") };
-    public static final SimpleDateFormat[] GER_DATE_TIME = { createSDF("dd.MM.yyyy HH:mm:ss"), createSDF("dd.MM.yyyy HH:mm") };
-
-    public static final SimpleDateFormat[] ISO_DATE = { createSDF("yyyy-MM-dd") };
-    public static final SimpleDateFormat[] ISO_DATE_TIME = { createSDF("yyyy-MM-dd HH:mm:ss"), createSDF("yyyy-MM-dd HH:mm") };
+    public static SimpleDateFormat[] getGerDateFormat() {
+        return new SimpleDateFormat[] { createSDF("dd.MM.yyyy") };
+    }
+    public static SimpleDateFormat[] getGerDateTimeFormat() {
+        return new SimpleDateFormat[] { createSDF("dd.MM.yyyy HH:mm:ss"), createSDF("dd.MM.yyyy HH:mm") };
+    }
+    public static SimpleDateFormat[] getIsoDateFormat() {
+        return new SimpleDateFormat[] { createSDF("yyyy-MM-dd") };
+    }
+    public static SimpleDateFormat[] getIsoDateTimeFormat() {
+        return new SimpleDateFormat[] { createSDF("yyyy-MM-dd HH:mm:ss"), createSDF("yyyy-MM-dd HH:mm") };
+    }
 
     private static Date parse(String s, SimpleDateFormat[] accepted) {
         for (SimpleDateFormat sdf : accepted) {
@@ -43,19 +50,19 @@ public class Dates {
     }
 
     public static boolean isGerDate(String s) {
-        return isDate(s, GER_DATE);
+        return isDate(s, getGerDateFormat());
     }
 
     public static boolean isGerDateTime(String s) {
-        return isDate(s, GER_DATE_TIME);
+        return isDate(s, getGerDateTimeFormat());
     }
 
     public static boolean isIsoDate(String s) {
-        return isDate(s, ISO_DATE);
+        return isDate(s, getIsoDateFormat());
     }
 
     public static boolean isIsoDateTime(String s) {
-        return isDate(s, ISO_DATE_TIME);
+        return isDate(s, getIsoDateTimeFormat());
     }
 
     public static boolean isKnownDate(String s) {
@@ -64,13 +71,13 @@ public class Dates {
 
     private static SimpleDateFormat[] getFormat(String s) {
         if (isGerDateTime(s)) {
-            return GER_DATE_TIME;
+            return getGerDateTimeFormat();
         } else if (isGerDate(s)) {
-            return GER_DATE;
+            return getGerDateFormat();
         } else if (isIsoDateTime(s)) {
-            return ISO_DATE_TIME;
+            return getIsoDateTimeFormat();
         } else if (isIsoDate(s)) {
-            return ISO_DATE;
+            return getIsoDateFormat();
         } else {
             throw new BadParameterException("Bad date format: " + s);
         }
@@ -81,18 +88,18 @@ public class Dates {
     }
 
     public static String toIsoDate(String s) {
-        return convertDate(s, ISO_DATE[0]);
+        return convertDate(s, getIsoDateFormat()[0]);
     }
 
     public static String toIsoDateTime(String s) {
-        return convertDate(s, ISO_DATE_TIME[0]);
+        return convertDate(s, getIsoDateTimeFormat()[0]);
     }
 
     public static String toGerDate(String s) {
-        return convertDate(s, GER_DATE[0]);
+        return convertDate(s, getGerDateFormat()[0]);
     }
 
     public static String toGerDateTime(String s) {
-        return convertDate(s, GER_DATE_TIME[0]);
+        return convertDate(s, getGerDateTimeFormat()[0]);
     }
 }
