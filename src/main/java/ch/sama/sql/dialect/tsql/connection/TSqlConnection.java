@@ -3,7 +3,7 @@ package ch.sama.sql.dialect.tsql.connection;
 import ch.sama.sql.dbo.connection.DBConnection;
 
 public class TSqlConnection extends DBConnection {
-    private static final String CONNECTION_PREFIX = "jdbc:jtds:sqlserver://";
+    private static final String CONNECTION_PREFIX = "jdbc:sqlserver://";
 
     public TSqlConnection(String connectionString) {
         super(CONNECTION_PREFIX + connectionString);
